@@ -38,7 +38,7 @@ public class Vengeance extends Skill implements PassiveSkill, Listener {
         return new String[]{
                 "For every subsequent hit, your damage will increase by <val>" + (level * 0.25) +"</val>",
                 "If you take damage, your damage will reset",
-                "you can deal a maximum of <val>" + (level)
+                "you can deal a maximum of <val>" + (level) +"</val> extra damage"
         };
     }
 
