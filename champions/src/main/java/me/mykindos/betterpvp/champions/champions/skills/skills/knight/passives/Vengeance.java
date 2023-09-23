@@ -25,6 +25,8 @@ public class Vengeance extends Skill implements PassiveSkill, Listener {
 
     private final WeakHashMap<Player, Integer> playerNumHitsMap = new WeakHashMap<>();
 
+    private double damageIncrease;
+
     @Inject
     public Vengeance(Champions champions, ChampionsManager championsManager) {
         super(champions, championsManager);
@@ -38,7 +40,7 @@ public class Vengeance extends Skill implements PassiveSkill, Listener {
     @Override
     public String[] getDescription(int level) {
         return new String[]{
-                "For every subsequent hit, your damage will increase by <val>" + (level * 0.25) +"</val>",
+                "For every subsequent hit, your damage will increase by <val>" + (level * damageIncrease) +"</val>",
                 "If you take damage, your damage will reset",
                 "you can deal a maximum of <val>" + (level) +"</val> extra damage"
         };
@@ -83,7 +85,11 @@ public class Vengeance extends Skill implements PassiveSkill, Listener {
             event.setDamage(event.getDamage() + Math.min(level,(((numHits - 1) * (level * 0.25)))));
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, (float)2.0, (float)(1 + (level * 0.2)));
         }
+    }
 
+    @Override
+    public void loadSkillConfig(){
+        damageIncrease = getConfig("damageIncrease", 0.25, Double.class);
     }
 
 }
