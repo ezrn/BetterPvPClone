@@ -10,12 +10,14 @@ import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
+import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.WeakHashMap;
 
@@ -24,6 +26,7 @@ import java.util.WeakHashMap;
 public class Vengeance extends Skill implements PassiveSkill, Listener {
 
     private final WeakHashMap<Player, Integer> playerNumHitsMap = new WeakHashMap<>();
+    private final WeakHashMap<Player, BukkitTask> playerTasks = new WeakHashMap<>();
 
     private double damageIncrease;
 
@@ -85,6 +88,16 @@ public class Vengeance extends Skill implements PassiveSkill, Listener {
             event.setDamage(event.getDamage() + Math.min(level,(((numHits - 1) * (level * 0.25)))));
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, (float)2.0, (float)(1 + (level * 0.2)));
         }
+        if (playerTasks.containsKey(player)) {
+            playerTasks.get(player).cancel();
+            playerTasks.remove(player);
+        }
+        BukkitTask task = Bukkit.getScheduler().runTaskLater(champions, () -> {
+            playerNumHitsMap.put(player, 0);
+            playerTasks.remove(player);
+        }, 100L);
+
+        playerTasks.put(player, task);
     }
 
     @Override
