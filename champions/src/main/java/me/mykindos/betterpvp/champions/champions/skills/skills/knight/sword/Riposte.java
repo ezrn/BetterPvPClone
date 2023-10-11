@@ -96,7 +96,7 @@ public class Riposte extends ChannelSkill implements CooldownSkill, InteractSkil
             int level = getLevel(player);
             boostedDamage.put(player, bonusDamage + (level - 1));
             player.setHealth(player.getHealth() + (healing + (level - 1)));
-            boostedAttackTime.put(player, System.currentTimeMillis());
+
             handRaisedTime.remove(player);
 
             UtilMessage.simpleMessage(player, getClassType().getName(), "You used <green>%s<gray>.", getName());
@@ -106,7 +106,6 @@ public class Riposte extends ChannelSkill implements CooldownSkill, InteractSkil
 
             active.remove(player.getUniqueId());
             boostedAttackPlayers.add(player.getUniqueId());
-
         }
     }
 
