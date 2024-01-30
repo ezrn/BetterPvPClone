@@ -39,6 +39,7 @@ import me.mykindos.betterpvp.core.components.clans.data.ClanMember;
 import me.mykindos.betterpvp.core.components.clans.data.ClanTerritory;
 import me.mykindos.betterpvp.core.components.clans.events.ClanEvent;
 import me.mykindos.betterpvp.core.config.Config;
+import me.mykindos.betterpvp.core.framework.delayedactions.DelayedActionListener;
 import me.mykindos.betterpvp.core.framework.events.scoreboard.ScoreboardUpdateEvent;
 import me.mykindos.betterpvp.core.framework.inviting.InviteHandler;
 import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
@@ -73,6 +74,8 @@ public class ClanEventListener extends ClanListener {
     private final Clans clans;
     private final CommandManager commandManager;
 
+    private final DelayedActionListener delayedActionListener;
+
     @Getter
     private final Map<Clan, Location[]> clanBedsMap = new HashMap<>();
 
@@ -82,12 +85,13 @@ public class ClanEventListener extends ClanListener {
 
     @Inject
     public ClanEventListener(Clans clans, ClanManager clanManager, ClientManager clientManager, InviteHandler inviteHandler,
-                             WorldBlockHandler blockHandler, CommandManager commandManager) {
+                             WorldBlockHandler blockHandler, CommandManager commandManager, DelayedActionListener delayedActionListener) {
         super(clanManager, clientManager);
         this.clans = clans;
         this.inviteHandler = inviteHandler;
         this.blockHandler = blockHandler;
         this.commandManager = commandManager;
+        this.delayedActionListener = delayedActionListener;
     }
 
     @EventHandler
@@ -635,10 +639,9 @@ public class ClanEventListener extends ClanListener {
                 clanManager.getRepository().updateClanHome(clan);
                 clanBedsMap.put(clan, null);
 
-                cancelClanHomeTeleportEvent(clan);
-
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (clan.equals(clanManager.getClanByPlayer(player).orElse(null))) {
+                        delayedActionListener.cancelClanHomeTeleportEvent(player);
                         UtilMessage.simpleMessage(player, "Clans", "Your clan home has been broken.");
                     }
                 }

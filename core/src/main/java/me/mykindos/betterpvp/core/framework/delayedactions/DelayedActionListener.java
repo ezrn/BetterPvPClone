@@ -6,6 +6,7 @@ import me.mykindos.betterpvp.core.client.Client;
 import me.mykindos.betterpvp.core.client.gamer.Gamer;
 import me.mykindos.betterpvp.core.client.repository.ClientManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
+import me.mykindos.betterpvp.core.framework.delayedactions.events.ClanHomeTeleportEvent;
 import me.mykindos.betterpvp.core.framework.delayedactions.events.PlayerDelayedActionEvent;
 import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
@@ -16,6 +17,7 @@ import me.mykindos.betterpvp.core.utilities.UtilTime;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -88,6 +90,21 @@ public class DelayedActionListener implements Listener {
             }
 
         });
+    }
+
+    public void cancelClanHomeTeleportEvent(Player player) {
+        DelayedAction delayedAction = delayedActionMap.get(player);
+            if (delayedAction != null && isTeleportToHomeAction(delayedAction)) {
+                delayedActionMap.remove(player);
+        }
+    }
+
+    private boolean isTeleportToHomeAction(DelayedAction delayedAction) {
+        Runnable actionRunnable = delayedAction.getRunnable();
+        if (actionRunnable instanceof ClanHomeTeleportEvent) {
+            return true;
+        }
+        return false;
     }
 
     @EventHandler
