@@ -7,6 +7,7 @@ import me.mykindos.betterpvp.clans.clans.ClanManager;
 import me.mykindos.betterpvp.clans.clans.commands.ClanCommand;
 import me.mykindos.betterpvp.clans.clans.commands.ClanSubCommand;
 import me.mykindos.betterpvp.clans.clans.events.ChunkUnclaimEvent;
+import me.mykindos.betterpvp.clans.clans.listeners.ClanEventListener;
 import me.mykindos.betterpvp.core.client.Client;
 import me.mykindos.betterpvp.core.client.Rank;
 import me.mykindos.betterpvp.core.client.repository.ClientManager;
@@ -15,6 +16,9 @@ import me.mykindos.betterpvp.core.components.clans.data.ClanMember;
 import me.mykindos.betterpvp.core.config.Config;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.UtilServer;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.util.Optional;
@@ -89,6 +93,11 @@ public class UnclaimSubCommand extends ClanSubCommand {
         }
 
         UtilServer.callEvent(new ChunkUnclaimEvent(player, locationClan));
+    }
+
+    private boolean isInChunk(Location location, Chunk chunk) {
+        return location.getWorld().equals(chunk.getWorld()) &&
+                location.getChunk().equals(chunk);
     }
 
     @Override

@@ -126,6 +126,10 @@ public class ClansWorldListener extends ClanListener {
         Player player = event.getPlayer();
         Block block = event.getBlock();
 
+        if (block.getType().name().contains("BED") && block.getType() != Material.BEDROCK) {
+            return;
+        }
+
         final Client client = clientManager.search().online(player);
         Clan clan = clanManager.getClanByPlayer(player).orElse(null);
 

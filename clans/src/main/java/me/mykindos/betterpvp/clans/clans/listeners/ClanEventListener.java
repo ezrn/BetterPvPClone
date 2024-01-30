@@ -1,6 +1,8 @@
 package me.mykindos.betterpvp.clans.clans.listeners;
 
 import com.google.inject.Inject;
+import lombok.Getter;
+import lombok.Setter;
 import me.mykindos.betterpvp.clans.Clans;
 import me.mykindos.betterpvp.clans.clans.Clan;
 import me.mykindos.betterpvp.clans.clans.ClanManager;
@@ -39,6 +41,7 @@ import me.mykindos.betterpvp.core.components.clans.events.ClanEvent;
 import me.mykindos.betterpvp.core.config.Config;
 import me.mykindos.betterpvp.core.framework.events.scoreboard.ScoreboardUpdateEvent;
 import me.mykindos.betterpvp.core.framework.inviting.InviteHandler;
+import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.UtilServer;
@@ -50,10 +53,15 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,8 +71,10 @@ public class ClanEventListener extends ClanListener {
     private final InviteHandler inviteHandler;
     private final WorldBlockHandler blockHandler;
     private final Clans clans;
-
     private final CommandManager commandManager;
+
+    @Getter
+    private final Map<Clan, Location[]> clanBedsMap = new HashMap<>();
 
     @Inject
     @Config(path = "clans.members.max", defaultValue = "6")
@@ -102,12 +112,22 @@ public class ClanEventListener extends ClanListener {
         clan.getTerritory().add(new ClanTerritory(chunkString));
         clanManager.getRepository().saveClanTerritory(clan, chunkString);
 
+        Clan playerClan = clanManager.getClanByPlayer(player).orElseThrow();
+
+        if(clan.getTerritory().size() == 1){
+            UtilServer.callEvent(new ClanSetHomeEvent(player, playerClan));
+        }
+
         UtilMessage.simpleMessage(player, "Clans", "You claimed Territory <yellow>" + UtilWorld.chunkToPrettyString(chunk) + "</yellow>.");
 
         clan.messageClan(String.format("<yellow>%s<gray> claimed territory <yellow>%s<gray>.", player.getName(),
                 UtilWorld.chunkToPrettyString(chunk)), player.getUniqueId(), true);
 
         blockHandler.outlineChunk(chunk);
+    }
+
+    private boolean isInChunk(Location location, Chunk chunk) {
+        return location.getWorld().equals(chunk.getWorld()) && location.getChunk().equals(chunk);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -119,6 +139,21 @@ public class ClanEventListener extends ClanListener {
         Chunk chunk = event.getChunk();
 
         String chunkString = UtilWorld.chunkToFile(chunk);
+
+        Optional<Clan> locationClanOptional = clanManager.getClanByChunk(chunk);
+
+        if(locationClanOptional.isPresent()) {
+            Clan locationClan = locationClanOptional.get();
+            Location[] bedLocations = getClanBedsMap().get(locationClan);
+            if (bedLocations != null && bedLocations.length == 2) {
+                if (isInChunk(bedLocations[0], chunk) || isInChunk(bedLocations[1], chunk)) {
+                    bedLocations[0].getBlock().setType(Material.AIR);
+                    bedLocations[1].getBlock().setType(Material.AIR);
+
+                    getClanBedsMap().put(locationClan, null);
+                }
+            }
+        }
 
         UtilMessage.simpleMessage(player, "Clans", "You unclaimed territory <alt2>" + UtilWorld.chunkToPrettyString(chunk) + "</alt2>.");
 
@@ -516,11 +551,99 @@ public class ClanEventListener extends ClanListener {
             return;
         }
 
-        clan.setHome(player.getLocation());
-        UtilMessage.simpleMessage(player, "Clans", "You set the clan home to <yellow>%s<gray>.",
-                UtilWorld.locationToString(player.getLocation()));
+        if (!player.getLocation().add(0, 1.0, 0).getBlock().isPassable() ||
+                !player.getLocation().add(0, 2.0, 0).getBlock().isPassable()) {
+            UtilMessage.simpleMessage(player, "Clans", "You do not have enough room to set the home here");
+            return;
+        }
 
-        clanManager.getRepository().updateClanHome(clan);
+        Block playerBlock = player.getLocation().getBlock();
+        BlockDirection direction = getDirection(player.getLocation().getYaw());
+        Block frontBlock = playerBlock.getRelative(direction.getModX(), 0, direction.getModZ());
+
+        // Check if both blocks are in the clan's territory
+        if (isBlockInClanTerritory(playerBlock, clan) && isBlockInClanTerritory(frontBlock, clan)) {
+            if (playerBlock.getType() == Material.AIR && frontBlock.getType() == Material.AIR) {
+                playerBlock.setType(Material.RED_BED);
+                frontBlock.setType(Material.RED_BED);
+
+                clanBedsMap.put(clan, new Location[]{playerBlock.getLocation(), frontBlock.getLocation()});
+
+                clan.setHome(player.getLocation().add(0, 0.5, 0));
+                UtilMessage.simpleMessage(player, "Clans", "You set the clan home to <yellow>%s<gray>.",
+                        UtilWorld.locationToString(player.getLocation()));
+                clanManager.getRepository().updateClanHome(clan);
+            } else {
+                UtilMessage.simpleMessage(player, "Clans", "You need two adjacent air blocks to set the clan home here.");
+            }
+        } else {
+            UtilMessage.simpleMessage(player, "Clans", "You can only set the clan home in your own territory.");
+        }
+    }
+
+    private boolean isBlockInClanTerritory(Block block, Clan clan) {
+        Optional<Clan> blockClanOptional = clanManager.getClanByLocation(block.getLocation());
+        return blockClanOptional.isPresent() && blockClanOptional.get().equals(clan);
+    }
+
+    private BlockDirection getDirection(float yaw) {
+        if (yaw < 0) {
+            yaw += 360;
+        }
+        yaw %= 360;
+        int angle = (int) ((yaw + 45) / 90);
+        switch (angle) {
+            case 0:
+                return BlockDirection.SOUTH;
+            case 1:
+                return BlockDirection.WEST;
+            case 2:
+                return BlockDirection.NORTH;
+            default:
+                return BlockDirection.EAST;
+        }
+    }
+
+    @Getter
+    enum BlockDirection {
+        NORTH(0, -1), SOUTH(0, 1), EAST(1, 0), WEST(-1, 0);
+
+        private final int modX;
+        private final int modZ;
+
+        BlockDirection(int modX, int modZ) {
+            this.modX = modX;
+            this.modZ = modZ;
+        }
+    }
+
+    @UpdateEvent(delay = 500)
+    public void checkAndUpdateBedLocations() {
+        for (Map.Entry<Clan, Location[]> entry : clanBedsMap.entrySet()) {
+            Clan clan = entry.getKey();
+            Location[] bedLocations = entry.getValue();
+
+            if (bedLocations == null || bedLocations.length != 2) {
+                continue;
+            }
+
+            Location bedPart1 = bedLocations[0];
+            Location bedPart2 = bedLocations[1];
+
+            if (bedPart1.getBlock().getType() != Material.RED_BED || bedPart2.getBlock().getType() != Material.RED_BED) {
+                clan.setHome(null);
+                clanManager.getRepository().updateClanHome(clan);
+                clanBedsMap.put(clan, null);
+
+                cancelClanHomeTeleportEvent(clan);
+
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (clan.equals(clanManager.getClanByPlayer(player).orElse(null))) {
+                        UtilMessage.simpleMessage(player, "Clans", "Your clan home has been broken.");
+                    }
+                }
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
