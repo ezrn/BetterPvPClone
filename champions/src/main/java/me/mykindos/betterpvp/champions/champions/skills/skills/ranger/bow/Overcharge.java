@@ -191,7 +191,7 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
                 continue;
             }
 
-            if (!isHolding(player)) {
+            if (!checkHolding(player)) {
                 toRemove.add(player);
                 iterator.remove();
                 continue;
@@ -203,21 +203,41 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
             }
 
             long currentTime = System.currentTimeMillis();
-            if (currentTime - activationTime < 250) {
-                if (!isHolding(player)) {
-                    toRemove.add(player);
+            if (currentTime - activationTime >= 250) {
+                if (!checkHolding(player)) {
                     iterator.remove();
+                    continue;
                 }
-                continue;
-            }
 
-            charge.tick();
-            charge.tickSound(player);
+                charge.tick();
+                charge.tickSound(player);
+            }
 
             for (Player p : toRemove) {
                 charging.remove(p);
             }
         }
+    }
+
+    /*public boolean checkHolding(Player player){
+        Material mainhand = player.getInventory().getItemInMainHand().getType();
+        if (mainhand == Material.BOW && player.getActiveItem().getType() == Material.AIR) {
+            return true;
+        }
+
+        if (mainhand == Material.CROSSBOW && player.getActiveItem().getType() == Material.AIR) {
+            CrossbowMeta meta = (CrossbowMeta) player.getInventory().getItemInMainHand().getItemMeta();
+            if (!meta.hasChargedProjectiles()) {
+                return true;
+            }
+            return true;
+        }
+        return false;
+    }*/
+
+    public boolean checkHolding(Player player) {
+        Material mainhand = player.getInventory().getItemInMainHand().getType();
+        return mainhand == Material.BOW || mainhand == Material.CROSSBOW;
     }
 
 
