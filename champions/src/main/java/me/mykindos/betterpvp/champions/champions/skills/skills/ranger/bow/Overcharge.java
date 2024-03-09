@@ -52,7 +52,7 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
 
     private final WeakHashMap<Player, ChargeData> charging = new WeakHashMap<>();
     private final WeakHashMap<Arrow, ArrowData> bonus = new WeakHashMap<>();
-
+    private final Map<Player, Long> activationTimes = new WeakHashMap<>();
 
     private final DisplayComponent actionBarComponent = ChargeData.getActionBar(this,
             charging,
@@ -111,11 +111,11 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
     public void activate(Player player, int level) {
         final ChargeData chargeData = new ChargeData((float) getChargePerSecond(level) / 100);
         charging.put(player, chargeData);
-        Bukkit.getLogger().info("[Overcharge] Activated for player " + player.getName() + " with level " + level + " and initial CPS " + getChargePerSecond(level));
+        activationTimes.put(player, System.currentTimeMillis()); // Record activation time
     }
 
     private double getChargePerSecond(int level) {
-        return baseCharge + (chargeIncreasePerLevel * (level - 1)); // Increment of 10% per level
+        return baseCharge + (chargeIncreasePerLevel * (level - 1));
     }
 
     @EventHandler
@@ -124,7 +124,7 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
         if (!(event.getProjectile() instanceof Arrow arrow)) return;
 
         ChargeData chargeData = charging.remove(player);
-        Bukkit.getLogger().info("removing player from chargeData");
+        Bukkit.getLogger().info("removing player from charging");
         if (chargeData != null) {
             double chargePercentage = chargeData.getCharge();
             int level = getLevel(player); // Assuming there's a method to get the player's level
@@ -139,23 +139,20 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
 
     @UpdateEvent
     public void createRedDustParticles() {
-        // Create a list to hold arrows that need to be removed after iteration
         List<Arrow> toRemove = new ArrayList<>();
 
         bonus.forEach((arrow, arrowData) -> {
             if (arrow.isValid() && !arrow.isDead() && !arrow.isOnGround()) {
-                double baseSize = 0.25;
+                double baseSize = 0.3;
                 double finalSize = baseSize * arrowData.extraDamage;
 
                 Particle.DustOptions redDust = new Particle.DustOptions(Color.fromRGB(255, 0, 0), (float)finalSize);
-                arrow.getWorld().spawnParticle(Particle.REDSTONE, arrow.getLocation(), 1, 0.1, 0.1, 0.1, 0, redDust);
+                arrow.getWorld().spawnParticle(Particle.REDSTONE, arrow.getLocation(), 1, 0.01, 0.01, 0.01, 0, redDust);
             } else {
-                // Add arrows to the removal list instead of removing them directly
                 toRemove.add(arrow);
             }
         });
 
-        // Remove the collected arrows from the map after iteration
         toRemove.forEach(bonus::remove);
     }
 
@@ -164,9 +161,9 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDamage(CustomDamageEvent event) {
         if (!(event.getProjectile() instanceof Arrow arrow)) return;
-        ArrowData arrowData = bonus.remove(arrow); // Now retrieving ArrowData instead of Double
+        ArrowData arrowData = bonus.remove(arrow);
         if (arrowData != null) {
-            double extraDamage = arrowData.extraDamage; // Extracting extraDamage from ArrowData
+            double extraDamage = arrowData.extraDamage;
             event.setDamage(event.getDamage() + extraDamage);
             Bukkit.getLogger().info("[Overcharge] Applying extra damage: " + extraDamage);
             event.addReason(getName());
@@ -175,19 +172,18 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
 
     @UpdateEvent
     public void updateCharge() {
-        // Charge check
+        List<Player> toRemove = new ArrayList<>();
         Iterator<Player> iterator = charging.keySet().iterator();
         while (iterator.hasNext()) {
             Player player = iterator.next();
             ChargeData charge = charging.get(player);
+            Long activationTime = activationTimes.get(player);
+
             if (player == null || !player.isOnline()) {
-                Bukkit.getLogger().info("player is null or offline");
                 iterator.remove();
                 continue;
             }
 
-            // Remove if they no longer have the skill
-            Gamer gamer = championsManager.getClientManager().search().online(player).getGamer();
             int level = getLevel(player);
             if (level <= 0) {
                 Bukkit.getLogger().info("level is < 0");
@@ -195,39 +191,32 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
                 continue;
             }
 
-            Material mainhand = player.getInventory().getItemInMainHand().getType();
-            if (mainhand == Material.BOW && player.getActiveItem().getType() == Material.AIR) {
-                Bukkit.getLogger().info("they are holding a bow");
+            if (!isHolding(player)) {
+                toRemove.add(player);
                 iterator.remove();
                 continue;
             }
 
-            if (mainhand == Material.CROSSBOW && player.getActiveItem().getType() == Material.AIR) {
-                Bukkit.getLogger().info("they have a crossbow");
-                CrossbowMeta meta = (CrossbowMeta) player.getInventory().getItemInMainHand().getItemMeta();
-                if (!meta.hasChargedProjectiles()) {
+            if (UtilBlock.isInLiquid(player)) {
+                iterator.remove();
+                continue;
+            }
+
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - activationTime < 250) {
+                if (!isHolding(player)) {
+                    toRemove.add(player);
                     iterator.remove();
                 }
                 continue;
             }
 
-            if (UtilBlock.isInLiquid(player)) {
-                Bukkit.getLogger().info("in liquid");
-                iterator.remove();
-                continue;
-            }
+            charge.tick();
+            charge.tickSound(player);
 
-            // Check if they still are blocking and charge
-            if (gamer.isHoldingRightClick()) {
-                Bukkit.getLogger().info("they are holding the right thing and holding right click");
-                charge.tick();
-                charge.tickSound(player);
-                continue;
-            } else {
-                Bukkit.getLogger().info("not holding right click or holding right item");
+            for (Player p : toRemove) {
+                charging.remove(p);
             }
-            Bukkit.getLogger().info("removing player from iterator");
-            iterator.remove();
         }
     }
 
@@ -248,6 +237,7 @@ public class Overcharge extends Skill implements InteractSkill, Listener {
     private static class Shoot {
         private final ChargeData data;
         private final int level;
+
     }
 
     private static class ArrowData {
