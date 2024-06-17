@@ -126,6 +126,13 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
                             Block forward = getForwardBlock(vec, player);
                             if (UtilBlock.airFoliage(forward)) {
                                 doLeap(player, true);
+
+                                for (LivingEntity entity : UtilEntity.getNearbyEnemies(player, player.getLocation(), 1)) {
+                                    if (entity != player) {
+                                        doWallKickCollision(player, entity);
+                                    }
+                                }
+
                                 return true;
                             }
                         }
@@ -251,10 +258,10 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
 
         int level = player.getLevel();
 
-        UtilMessage.simpleMessage(player, getClassType().getName(), "You hit <alt>" + target.getName() + "</alt> while landing.");
+        UtilMessage.simpleMessage(player, getClassType().getName(), "You hit <alt2>" + target.getName() + "</alt2> with <alt>Leap<alt>.");
         UtilDamage.doCustomDamage(new CustomDamageEvent(target, player, null, DamageCause.CUSTOM, getDamage(level), false, "Leap Landing"));
 
-        UtilMessage.simpleMessage(target, getClassType().getName(), "<alt>" + player.getName() + "</alt> landed on you with <alt>Leap</alt>.");
+        UtilMessage.simpleMessage(target, getClassType().getName(), "<alt2>" + player.getName() + "</alt2> landed on you with <alt>Leap</alt>.");
 
         for (LivingEntity entity : UtilEntity.getNearbyEnemies(player, target.getLocation(), 1)) {
             if (entity != player && entity != target) {
@@ -269,9 +276,9 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
 
         int level = player.getLevel();
 
-        UtilMessage.simpleMessage(player, getClassType().getName(), "You hit <alt>" + target.getName() + "</alt> with a wall kick.");
+        UtilMessage.simpleMessage(player, getClassType().getName(), "You <alt>Wall-Kicked</alt> off of <alt2>" + target.getName() + ".");
         UtilDamage.doCustomDamage(new CustomDamageEvent(target, player, null, DamageCause.CUSTOM, getDamage(level), false, "Wall Kick"));
 
-        UtilMessage.simpleMessage(target, getClassType().getName(), "<alt>" + player.getName() + "</alt> hit you with a <alt>Wall Kick</alt>.");
+        UtilMessage.simpleMessage(target, getClassType().getName(), "<alt2>" + player.getName() + "</alt> Wall-Kicked</alt> off of you.");
     }
 }
