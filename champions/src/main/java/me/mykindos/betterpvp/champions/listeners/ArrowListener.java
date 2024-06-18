@@ -1,12 +1,15 @@
 package me.mykindos.betterpvp.champions.listeners;
 
 import me.mykindos.betterpvp.champions.Champions;
+import me.mykindos.betterpvp.champions.champions.roles.RoleManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
+import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.config.Config;
 import me.mykindos.betterpvp.core.framework.events.items.ItemUpdateLoreEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.UtilServer;
+import me.mykindos.betterpvp.champions.champions.roles.RoleManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
@@ -22,6 +25,7 @@ import java.util.HashMap;
 
 @BPvPListener
 public class ArrowListener implements Listener {
+    private final RoleManager roleManager;
 
     @Inject
     @Config(path = "combat.crit-arrows", defaultValue = "true")
@@ -30,14 +34,14 @@ public class ArrowListener implements Listener {
     @Inject
     @Config(path = "combat.arrow-base-damage", defaultValue = "6.0")
     private double baseArrowDamage;
-
     private final HashMap<Arrow, Float> arrows = new HashMap<>();
 
     private final Champions champions;
 
     @Inject
-    public ArrowListener(Champions champions) {
+    public ArrowListener(Champions champions, RoleManager roleManager) {
         this.champions = champions;
+        this.roleManager = roleManager;
     }
 
     @EventHandler
@@ -54,8 +58,15 @@ public class ArrowListener implements Listener {
     public void onBaseArrowDamage(CustomDamageEvent event) {
         if (event.getProjectile() instanceof Arrow) {
             event.setDamage(baseArrowDamage);
+
+            if (event.getDamager() instanceof Player player) {
+                if (!roleManager.hasRole(player, Role.ASSASSIN)) {
+                    event.setDamage(baseArrowDamage - 1);
+                }
+            }
         }
     }
+
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onArrowDamage(CustomDamageEvent event) {

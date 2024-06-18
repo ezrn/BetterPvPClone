@@ -8,32 +8,44 @@ import me.mykindos.betterpvp.champions.champions.skills.Skill;
 import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
 import me.mykindos.betterpvp.champions.champions.skills.types.CooldownSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.InteractSkill;
+import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.combat.events.VelocityType;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
 import me.mykindos.betterpvp.core.effects.EffectTypes;
+import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
-import me.mykindos.betterpvp.core.utilities.UtilBlock;
-import me.mykindos.betterpvp.core.utilities.UtilMessage;
-import me.mykindos.betterpvp.core.utilities.UtilServer;
-import me.mykindos.betterpvp.core.utilities.UtilVelocity;
+import me.mykindos.betterpvp.core.utilities.*;
 import me.mykindos.betterpvp.core.utilities.math.VelocityData;
+import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.WeakHashMap;
 
 @Singleton
 @BPvPListener
 public class Leap extends Skill implements InteractSkill, CooldownSkill, Listener {
 
+    private final WeakHashMap<Player, Long> active = new WeakHashMap<>();
     private double leapStrength;
     private double wallKickStrength;
     private double wallKickInternalCooldown;
     private double fallDamageLimit;
+    private double damage;
+    private double damageIncreasePerLevel;
+    private static final long COLLISION_DELAY = 250L;
 
     @Inject
     public Leap(Champions champions, ChampionsManager championsManager) {
@@ -52,8 +64,10 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
                 "",
                 "Take a great leap forward",
                 "",
-                "Activate while your back is to a wall to perform",
-                "a wall-kick, which will not affect the cooldown",
+                "Activate while your back is to a wall or player to",
+                "perform a wall-kick, which will not affect the cooldown",
+                "",
+                "Wall-kicking off of or landing on a player will deal <stat>" +getDamage(level) + "</stat> damage",
                 "",
                 "Cannot be used while <effect>Slowed</effect>",
                 "",
@@ -80,19 +94,29 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
             UtilMessage.message(player, getClassType().getName(), "You used <alt>Wall Kick</alt>.");
         }
 
+        player.setFallDistance(0);
         player.getWorld().spawnEntity(player.getLocation(), EntityType.LLAMA_SPIT);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 2.0F, 1.2F);
 
         UtilServer.runTaskLater(champions, () -> {
-            championsManager.getEffects().addEffect(player, player, EffectTypes.NO_FALL,getName(), (int) fallDamageLimit,
+            championsManager.getEffects().addEffect(player, player, EffectTypes.NO_FALL, getName(), (int) fallDamageLimit,
                     50L, true, true, UtilBlock::isGrounded);
         }, 3L);
 
+        active.put(player, System.currentTimeMillis());
     }
 
     public boolean wallKick(Player player) {
         if (championsManager.getCooldowns().use(player, "Wall Kick", wallKickInternalCooldown, false)) {
             Vector vec = player.getLocation().getDirection();
+
+            for (LivingEntity entity : UtilEntity.getNearbyEnemies(player, player.getLocation(), 2)) {
+                if (entity != player) {
+                    doLeap(player, true);
+                    return true;
+                }
+            }
+
             boolean[] directionFlags = getDirectionFlags(vec);
 
             for (int x = -1; x <= 1; x++) {
@@ -146,10 +170,8 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
         return forward;
     }
 
-
     @Override
     public boolean canUse(Player player) {
-
         return !wallKick(player);
     }
 
@@ -183,7 +205,65 @@ public class Leap extends Skill implements InteractSkill, CooldownSkill, Listene
         leapStrength = getConfig("leapStrength", 1.3, Double.class);
         wallKickStrength = getConfig("wallKickStrength", 0.9, Double.class);
         wallKickInternalCooldown = getConfig("wallKickInternalCooldown", 0.5, Double.class);
-        fallDamageLimit = getConfig("fallDamageLimit", 8.0, Double.class);
+        fallDamageLimit = getConfig("fallDamageLimit", 15.0, Double.class);
+        damage = getConfig("damage", 5.0, Double.class);
+        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 0.0,Double.class);
+    }
 
+    private double getDamage(int level) {
+        return damage + ((level -1 ) * damageIncreasePerLevel);
+    }
+
+    @UpdateEvent
+    public void checkCollision() {
+        Iterator<Map.Entry<Player, Long>> it = active.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Player, Long> next = it.next();
+            Player player = next.getKey();
+            if (player.isDead()) {
+                it.remove();
+                continue;
+            }
+
+            final Location midpoint = UtilPlayer.getMidpoint(player).clone();
+
+            final Optional<LivingEntity> hit = UtilEntity.interpolateCollision(midpoint,
+                            midpoint.clone().add(player.getVelocity().normalize().multiply(0.5)),
+                            (float) 0.6,
+                            ent -> UtilEntity.IS_ENEMY.test(player, ent))
+                    .map(RayTraceResult::getHitEntity).map(LivingEntity.class::cast);
+
+            if (hit.isPresent()) {
+                doLeapCollision(player, hit.get(), next.getValue());
+                continue;
+            }
+
+            if (UtilBlock.isGrounded(player) && UtilTime.elapsed(next.getValue(), 750L)) {
+                it.remove();
+            }
+        }
+    }
+
+    public void doLeapCollision(Player player, LivingEntity target, long activationTime) {
+        if (System.currentTimeMillis() - activationTime < COLLISION_DELAY) {
+            return;
+        }
+
+        int level = player.getLevel();
+
+        UtilMessage.simpleMessage(player, getClassType().getName(), "You hit <alt2>" + target.getName() + "</alt2> with <alt>Leap<alt>.");
+        CustomDamageEvent cde = new CustomDamageEvent(target, player, null, DamageCause.CUSTOM, getDamage(level), false, "Leap");
+        cde.setDamageDelay(0);
+        UtilDamage.doCustomDamage(cde);
+
+        UtilMessage.simpleMessage(target, getClassType().getName(), "<alt2>" + player.getName() + "</alt2> landed on you with <alt>Leap</alt>.");
+
+        for (LivingEntity entity : UtilEntity.getNearbyEnemies(player, target.getLocation(), 1)) {
+            if (entity != player && entity != target) {
+                UtilDamage.doCustomDamage(new CustomDamageEvent(entity, player, null, DamageCause.CUSTOM, getDamage(level), false, "Leap Landing"));
+            }
+        }
+
+        active.remove(player);
     }
 }

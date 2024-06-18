@@ -110,8 +110,8 @@ public class MarkedForDeath extends PrepareArrowSkill {
 
     @Override
     public void loadSkillConfig() {
-        baseDuration = getConfig("baseDuration", 6.0, Double.class);
+        baseDuration = getConfig("baseDuration", 4.0, Double.class);
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
-        vulnerabilityStrength = getConfig("vulnerabilityStrength", 4, Integer.class);
+        vulnerabilityStrength = getConfig("vulnerabilityStrength", 3, Integer.class);
     }
 }

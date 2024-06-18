@@ -95,9 +95,9 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
         // Effects
         championsManager.getEffects().addEffect(player, EffectTypes.VANISH, getName(), 1, (long) (getDuration(level) * 1000L));
         smoked.put(player.getUniqueId(), System.currentTimeMillis());
-        for (Player target : UtilPlayer.getNearbyEnemies(player, player.getLocation(), blindRadius)) {
+        /*for (Player target : UtilPlayer.getNearbyEnemies(player, player.getLocation(), blindRadius)) {
             championsManager.getEffects().addEffect(target, player, EffectTypes.BLINDNESS, 1, (long) (blindDuration * 1000L));
-        }
+        }*/
 
         // Display particle to those only within 30 blocks
         Particle.EXPLOSION_HUGE.builder()
@@ -120,6 +120,16 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
 
     private void reappear(Player player) {
         championsManager.getEffects().removeEffect(player, EffectTypes.VANISH, getName());
+
+        Particle.SQUID_INK.builder()
+                .location(player.getLocation())
+                .receivers(30)
+                .extra(0)
+                .count(10)
+                .offset(3, 3, 3)
+                .spawn();
+
+        player.playSound(player.getLocation().add(0, 1, 0), Sound.ENTITY_ALLAY_HURT, 0.5F, 0.5F);
         UtilMessage.message(player, getClassType().getName(), "You have reappeared.");
     }
 
@@ -141,14 +151,14 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
         }
     }
 
-    @EventHandler
+    /*@EventHandler
     public void onPickup(PlayerAttemptPickupItemEvent event) {
         if(allowPickupItems) return;
         Player player = event.getPlayer();
         if (smoked.containsKey(player.getUniqueId())) {
             interact(player);
         }
-    }
+    }*/
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
@@ -219,7 +229,7 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
 
     @Override
     public void loadSkillConfig() {
-        baseDuration = getConfig("baseDuration", 4.0, Double.class);
+        baseDuration = getConfig("baseDuration", 3.0, Double.class);
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         blindDuration = getConfig("blindDuration", 1.75, Double.class);
         blindRadius = getConfig("blindRadius", 4.0, Double.class);

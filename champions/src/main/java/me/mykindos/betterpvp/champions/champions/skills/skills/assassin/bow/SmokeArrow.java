@@ -135,7 +135,7 @@ public class SmokeArrow extends PrepareArrowSkill {
 
     @Override
     public void loadSkillConfig() {
-        baseDuration = getConfig("baseDuration", 3.0, Double.class);
+        baseDuration = getConfig("baseDuration", 4.0, Double.class);
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         slownessStrength = getConfig("slownessStrength", 1, Integer.class);
     }

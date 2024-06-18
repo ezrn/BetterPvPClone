@@ -33,11 +33,9 @@ import java.util.WeakHashMap;
 public class Recall extends Skill implements CooldownToggleSkill, Listener {
 
     public static final long MARKER_MILLIS = 200;
-
     private final Map<Player, RecallData> data = new WeakHashMap<>();
-    private double percentHealthRecovered;
+    private double healthRecovered;
     private double duration;
-
     private double durationIncreasePerLevel;
 
     @Inject
@@ -60,7 +58,7 @@ public class Recall extends Skill implements CooldownToggleSkill, Listener {
                 "Drop your Sword / Axe to activate",
                 "",
                 "Teleports you back in time <val>" + getDuration(level) + "</val> seconds, increasing",
-                "your health by <stat>" + (percentHealthRecovered * 100) + "%</stat> of the health you had",
+                "your health by <stat>" + (healthRecovered),
                 "",
                 "Cooldown: <val>" + getCooldown(level)
         };
@@ -130,7 +128,7 @@ public class Recall extends Skill implements CooldownToggleSkill, Listener {
         player.teleportAsync(teleportLocation).thenAccept(result -> player.setFallDistance(0));
 
         // Heal Logic
-        double heal = UtilPlayer.getMaxHealth(player) * percentHealthRecovered;
+        double heal = healthRecovered;
         UtilPlayer.health(player, heal);
 
         // Cues
@@ -161,7 +159,7 @@ public class Recall extends Skill implements CooldownToggleSkill, Listener {
 
     @Override
     public void loadSkillConfig(){
-        percentHealthRecovered = getConfig("percentHealthRecovered", 0.25, Double.class);
+        healthRecovered = getConfig("healthRecovered", 5.0, Double.class);
         duration = getConfig("duration", 2.0, Double.class);
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.5, Double.class);
     }

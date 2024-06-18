@@ -15,6 +15,7 @@ import me.mykindos.betterpvp.core.utilities.UtilDamage;
 import me.mykindos.betterpvp.core.utilities.UtilEntity;
 import me.mykindos.betterpvp.core.utilities.UtilFormat;
 import me.mykindos.betterpvp.core.utilities.UtilLocation;
+import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.math.VectorLine;
 import me.mykindos.betterpvp.core.utilities.model.MultiRayTraceResult;
 import org.bukkit.Location;
@@ -95,7 +96,7 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
             final Location lineEnd = teleportLocation.clone().add(0.0, player.getHeight() / 2, 0.0);
             final VectorLine line = VectorLine.withStepSize(lineStart, lineEnd, 0.25f);
             for (Location point : line.toLocations()) {
-                Particle.CRIT.builder().location(point).count(2).receivers(30).extra(0).spawn();
+                player.getWorld().spawnParticle(Particle.CRIT, point, 2, 0, 0, 0, 0);
             }
 
             // Collision
@@ -107,7 +108,7 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
                     .ifPresentOrElse(stream -> stream.map(RayTraceResult::getHitEntity)
                                     .map(LivingEntity.class::cast)
                                     .forEach(hit -> hit(player, level, hit)),
-                            () -> player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 2.0F, 1.4F));
+                            () -> player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.5F, 1.4F));
         });
     }
 
@@ -117,8 +118,15 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
         UtilDamage.doCustomDamage(cde);
 
         if (!cde.isCancelled()) {
-            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT, 0.2f, 2f);
-            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ITEM_TRIDENT_HIT, 0.2f, 1.5f);
+            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT, 0.6f, 2f);
+            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ITEM_TRIDENT_HIT, 0.6f, 1.5f);
+
+            UtilMessage.simpleMessage(caster, getClassType().getName(), "You <alt>Slashed</alt> <alt2>" + hit.getName() + "</alt2> for " + getDamage(level) + " damage.");
+
+            // Feedback for the player being hit by the slash
+            if (hit instanceof Player) {
+                UtilMessage.simpleMessage((Player) hit, getClassType().getName(), "You were <alt>Slashed</alt> by <alt2>" + caster.getName() + "</alt2> for <alt>" + getDamage(level) + "</alt> damage.");
+            }
         }
     }
 
