@@ -60,7 +60,7 @@ public class ArrowListener implements Listener {
             event.setDamage(baseArrowDamage);
 
             if (event.getDamager() instanceof Player player) {
-                if (!roleManager.hasRole(player, Role.ASSASSIN)) {
+                if (roleManager.hasRole(player, Role.ASSASSIN)) {
                     event.setDamage(baseArrowDamage - 1);
                 }
             }

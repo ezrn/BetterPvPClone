@@ -219,7 +219,7 @@ public class Blink extends Skill implements InteractSkill, CooldownSkill, Listen
                 if (!UtilBlock.isWall(testBlock)) {
                     targetLocation = testLocation;
 
-                    if (!UtilPlayer.getNearbyPlayers(player, targetLocation, 0.5D, EntityProperty.ENEMY).isEmpty()) {
+                    if (!UtilPlayer.getNearbyPlayers(player, testLocation, 0.5D, EntityProperty.ENEMY).isEmpty()) {
                         break;
                     }
                 } else {
