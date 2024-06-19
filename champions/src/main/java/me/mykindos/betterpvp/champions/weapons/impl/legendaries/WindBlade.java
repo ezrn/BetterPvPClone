@@ -46,12 +46,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @BPvPListener
 public class WindBlade extends ChannelWeapon implements InteractWeapon, LegendaryWeapon, Listener {
 
-    private static final String ABILITY_NAME = "Flight";
+    private static final String ABILITY_NAME = "Wind Dash";
     private double windChargeRadius;
     private double windDamage;
     private double velocityStrength;
-    private double lineStartDistance; // Distance to start lines from the player
-    private int particleDuration; // Duration for particles to spawn after activation
+    private double lineStartDistance;
+    private int particleDuration;
     private double windBurstCooldown;
     public int energyCost;
     public int dashEnergyCost;
@@ -61,10 +61,9 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     private final CooldownManager cooldownManager;
     private final Champions champions;
     private final Map<Player, Long> active = new ConcurrentHashMap<>();
-    private final Map<Player, List<List<Line>>> playerLines = new HashMap<>(); // To hold multiple sets of lines
-    private final Map<Player, List<Integer>> playerLineIndices = new HashMap<>(); // To hold indices for multiple sets of lines
+    private final Map<Player, List<List<Line>>> playerLines = new HashMap<>();
+    private final Map<Player, List<Integer>> playerLineIndices = new HashMap<>();
     private final Set<Player> trackedPlayers = ConcurrentHashMap.newKeySet();
-
 
     @Inject
     public WindBlade(Champions champions, EnergyHandler energyHandler, ChampionsManager championsManager, CooldownManager cooldownManager, ClientManager clientManager) {
@@ -86,9 +85,9 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         lore.add(Component.text("their final battle against the Titans.", NamedTextColor.WHITE));
         lore.add(Component.text(""));
         lore.add(UtilMessage.deserialize("<white>Deals <yellow>%.1f Damage <white>with attack", baseDamage));
-        lore.add(UtilMessage.deserialize("<yellow>Right-Click <white>to use <green>%s<green>(2 charges)", ABILITY_NAME));
+        lore.add(UtilMessage.deserialize("<yellow>Right-Click <white>to use <green>%s<green>", ABILITY_NAME));
         lore.add(UtilMessage.deserialize("<yellow>Left-Click <white>to use <green>Wind Burst<green>"));
-        lore.add(UtilMessage.deserialize("<yellow>Crouch <white>to use <green>Slow Fall<green>"));
+        lore.add(UtilMessage.deserialize("<yellow>Crouch <white>to use <green>Glide<green>"));
         return lore;
     }
 
@@ -134,12 +133,10 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     private void drawLines(Player player) {
         Location origin = player.getEyeLocation();
 
-        // Create directions with the specified rotations and start distance
         Vector mainDirection = origin.getDirection().normalize();
         Vector leftDirection = mainDirection.clone().rotateAroundY(Math.toRadians(-30)).normalize();
         Vector rightDirection = mainDirection.clone().rotateAroundY(Math.toRadians(30)).normalize();
 
-        // Move origins forward by the start distance
         Location mainOrigin = origin.clone().add(mainDirection.clone().multiply(lineStartDistance));
         Location leftOrigin = origin.clone().add(leftDirection.clone().multiply(lineStartDistance));
         Location rightOrigin = origin.clone().add(rightDirection.clone().multiply(lineStartDistance));
@@ -148,7 +145,6 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         List<Location> leftLine = getLinePoints(leftOrigin, leftDirection);
         List<Location> rightLine = getLinePoints(rightOrigin, rightDirection);
 
-        // Ensure multiple sets of lines can be drawn concurrently
         playerLines.computeIfAbsent(player, k -> new ArrayList<>()).add(Arrays.asList(new Line(mainLine), new Line(leftLine), new Line(rightLine)));
         playerLineIndices.computeIfAbsent(player, k -> new ArrayList<>()).add(0);
     }
@@ -156,7 +152,11 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     private List<Location> getLinePoints(Location origin, Vector direction) {
         List<Location> points = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
-            points.add(origin.clone().add(direction.clone().multiply(i * 0.5)));
+            Location point = origin.clone().add(direction.clone().multiply(i * 0.5));
+            if (!UtilBlock.airFoliage(point.getBlock())) {
+                break;
+            }
+            points.add(point);
         }
         return points;
     }
@@ -185,7 +185,6 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                         Location point = line.getPoints().get(index);
                         player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, point, 1, 0, 0, 0, 0);
 
-                        // Check for nearby entities and damage them
                         for (LivingEntity target : UtilEntity.getNearbyEnemies(player, point, windChargeRadius)) {
                             CustomDamageEvent cde = new CustomDamageEvent(target, player, null, EntityDamageEvent.DamageCause.CUSTOM, windDamage, false, "Wind Burst");
                             cde.setDamageDelay(0);
