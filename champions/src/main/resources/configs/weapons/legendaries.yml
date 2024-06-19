@@ -15,7 +15,7 @@ wind_blade:
   lineStartDistance: 1.0
   baseMaxCharges: 1
   baseRechargeSeconds: 3.0
-  windBurstCooldown: 1.5
+  windBurstCooldown: 1.0
 hyper_axe:
   enabled: true
   baseDamage: 5.0

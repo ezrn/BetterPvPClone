@@ -110,8 +110,8 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         lore.add(Component.text("their final battle against the Titans.", NamedTextColor.WHITE));
         lore.add(Component.text(""));
         lore.add(UtilMessage.deserialize("<white>Deals <yellow>%.1f Damage <white>with attack", baseDamage));
-        lore.add(UtilMessage.deserialize("<yellow>Right-Click <white>to use <green>%s<green>(3 charges)", ABILITY_NAME));
-        lore.add(UtilMessage.deserialize("<yellow>Left-Click <white>to use <green>Wind Blast<green>"));
+        lore.add(UtilMessage.deserialize("<yellow>Right-Click <white>to use <green>%s<green>(2 charges)", ABILITY_NAME));
+        lore.add(UtilMessage.deserialize("<yellow>Left-Click <white>to use <green>Wind Burst<green>"));
         lore.add(UtilMessage.deserialize("<yellow>Crouch <white>to use <green>Slow Fall<green>"));
         return lore;
     }
@@ -140,10 +140,11 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                 }
                 player.getWorld().spawnParticle(Particle.EXPLOSION_NORMAL, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.1);
                 player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 1, 0.5, 0.5, 0.5, 0.1);
-                UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 0.2F, 1.5F);
                 ticks++;
             }
         }.runTaskTimer(champions, 0, 1);
+
+        UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 0.5F, 2.0F);
 
         windBladeData.useCharge();
         notifyCharges(player, windBladeData.getCharges());
@@ -156,7 +157,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         Player player = event.getPlayer();
         if (isHoldingWeapon(player) && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && championsManager.getCooldowns().use(player, "Wall Kick", windBurstCooldown, false)) {
             drawLines(player);
-            UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_BLOW_OUT, 0.8F, 1.5F);
+            UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.2F, 2.0F);
         }
     }
 
@@ -218,7 +219,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                         // Check for nearby entities and damage them
                         for (LivingEntity target : UtilEntity.getNearbyEnemies(player, point, windChargeRadius)) {
                             UtilDamage.doCustomDamage(new CustomDamageEvent(target, player, null, EntityDamageEvent.DamageCause.CUSTOM, windDamage, false, "Wind Burst"));
-                            target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 5, 3));
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 3));
                             UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
                         }
                     }
@@ -328,6 +329,8 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                 if (player.isSneaking()) {
                     player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, Integer.MAX_VALUE, 0, false, false));
                     player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 1, 0.2, 0.2, 0.2, 0);
+                    player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.5F, 0.0F);
+
 
                 } else {
                     player.removePotionEffect(PotionEffectType.SLOW_FALLING);
@@ -365,7 +368,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         windDamage = getConfig("windDamage", 7.0, Double.class);
         lineStartDistance = getConfig("lineStartDistance", 1.0, Double.class);
         particleDuration = getConfig("particleDuration", 10, Integer.class);
-        windBurstCooldown = getConfig("windBurstCooldown", 1.5, Double.class);
+        windBurstCooldown = getConfig("windBurstCooldown", 1.0, Double.class);
     }
 
     private void trackPlayer(Player player) {
