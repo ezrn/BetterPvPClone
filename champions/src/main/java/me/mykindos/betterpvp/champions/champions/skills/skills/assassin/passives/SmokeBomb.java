@@ -95,9 +95,9 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
         // Effects
         championsManager.getEffects().addEffect(player, EffectTypes.VANISH, getName(), 1, (long) (getDuration(level) * 1000L));
         smoked.put(player.getUniqueId(), System.currentTimeMillis());
-        /*for (Player target : UtilPlayer.getNearbyEnemies(player, player.getLocation(), blindRadius)) {
+        for (Player target : UtilPlayer.getNearbyEnemies(player, player.getLocation(), blindRadius)) {
             championsManager.getEffects().addEffect(target, player, EffectTypes.BLINDNESS, 1, (long) (blindDuration * 1000L));
-        }*/
+        }
 
         // Display particle to those only within 30 blocks
         Particle.EXPLOSION_HUGE.builder()
@@ -150,15 +150,6 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
             interact(player);
         }
     }
-
-    /*@EventHandler
-    public void onPickup(PlayerAttemptPickupItemEvent event) {
-        if(allowPickupItems) return;
-        Player player = event.getPlayer();
-        if (smoked.containsKey(player.getUniqueId())) {
-            interact(player);
-        }
-    }*/
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {

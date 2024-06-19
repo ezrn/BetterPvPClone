@@ -34,6 +34,9 @@ public class ArrowListener implements Listener {
     @Inject
     @Config(path = "combat.arrow-base-damage", defaultValue = "6.0")
     private double baseArrowDamage;
+
+    @Config(path = "combat.arrow-assassin-damage", defaultValue = "5.0")
+    private double assassinArrowDamage;
     private final HashMap<Arrow, Float> arrows = new HashMap<>();
 
     private final Champions champions;
@@ -61,7 +64,7 @@ public class ArrowListener implements Listener {
 
             if (event.getDamager() instanceof Player player) {
                 if (roleManager.hasRole(player, Role.ASSASSIN)) {
-                    event.setDamage(baseArrowDamage - 1);
+                    event.setDamage(assassinArrowDamage);
                 }
             }
         }
