@@ -191,7 +191,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                             UtilDamage.doCustomDamage(cde);
                             Vector knockback = point.toVector().subtract(player.getLocation().toVector()).normalize().multiply(0.5);
                             target.setVelocity(knockback);
-                            UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
+                            UtilSound.playSound(target.getWorld(), target.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
                         }
                     }
                 }
@@ -288,6 +288,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                 }
             } else {
                 trackedPlayers.remove(player);
+                player.removePotionEffect(PotionEffectType.SLOW_FALLING);
             }
         }
     }
