@@ -11,11 +11,11 @@ wind_blade:
   baseDamage: 7.0
   velocityStrength: 1.2
   windChargeradius: 2.0
-  windDamage: 7.0
+  windDamage: 1.0
   lineStartDistance: 1.0
-  baseMaxCharges: 1
-  baseRechargeSeconds: 3.0
-  windBurstCooldown: 1.0
+  windBurstCooldown: 0.75
+  energyCost: 15
+  dashEnergyCost: 40
 hyper_axe:
   enabled: true
   baseDamage: 5.0

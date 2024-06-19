@@ -5,26 +5,20 @@ import com.google.inject.Singleton;
 import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.weapons.impl.legendaries.data.Line;
-import me.mykindos.betterpvp.champions.weapons.impl.legendaries.data.WindBladeData;
-import me.mykindos.betterpvp.core.client.gamer.Gamer;
 import me.mykindos.betterpvp.core.client.repository.ClientManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.combat.events.PreCustomDamageEvent;
 import me.mykindos.betterpvp.core.combat.weapon.types.ChannelWeapon;
 import me.mykindos.betterpvp.core.combat.weapon.types.InteractWeapon;
 import me.mykindos.betterpvp.core.combat.weapon.types.LegendaryWeapon;
-import me.mykindos.betterpvp.core.components.champions.events.PlayerUseItemEvent;
 import me.mykindos.betterpvp.core.cooldowns.CooldownManager;
 import me.mykindos.betterpvp.core.energy.EnergyHandler;
 import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
 import me.mykindos.betterpvp.core.utilities.*;
 import me.mykindos.betterpvp.core.utilities.math.VelocityData;
-import me.mykindos.betterpvp.core.utilities.model.display.PermanentComponent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -56,17 +50,16 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     private double windChargeRadius;
     private double windDamage;
     private double velocityStrength;
-    private int baseMaxCharges;
-    private double baseRechargeSeconds;
     private double lineStartDistance; // Distance to start lines from the player
     private int particleDuration; // Duration for particles to spawn after activation
     private double windBurstCooldown;
+    public int energyCost;
+    public int dashEnergyCost;
     private final EnergyHandler energyHandler;
     private final ChampionsManager championsManager;
     private final ClientManager clientManager;
     private final CooldownManager cooldownManager;
     private final Champions champions;
-    private final Map<Player, WindBladeData> charges = new WeakHashMap<>();
     private final Map<Player, Long> active = new ConcurrentHashMap<>();
     private final Map<Player, List<List<Line>>> playerLines = new HashMap<>(); // To hold multiple sets of lines
     private final Map<Player, List<Integer>> playerLineIndices = new HashMap<>(); // To hold indices for multiple sets of lines
@@ -82,23 +75,6 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         this.cooldownManager = cooldownManager;
         this.championsManager = championsManager;
     }
-
-    // Action bar component to display charges
-    private final PermanentComponent actionBarComponent = new PermanentComponent(gamer -> {
-        final Player player = gamer.getPlayer();
-
-        // Only display charges in hotbar if holding the weapon
-        if (player == null || !charges.containsKey(player) || !isHoldingWeapon(player)) {
-            return null; // Skip if not online or not charging
-        }
-
-        final int maxCharges = baseMaxCharges;
-        final int newCharges = charges.get(player).getCharges();
-
-        return Component.text(getName() + " ").color(NamedTextColor.WHITE).decorate(TextDecoration.BOLD)
-                .append(Component.text("\u25A0".repeat(newCharges)).color(NamedTextColor.GREEN))
-                .append(Component.text("\u25A0".repeat(Math.max(0, maxCharges - newCharges))).color(NamedTextColor.RED));
-    });
 
     @Override
     public List<Component> getLore(ItemMeta itemMeta) {
@@ -118,13 +94,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
 
     @Override
     public void activate(Player player) {
-        WindBladeData windBladeData = charges.get(player);
-        if (windBladeData == null || windBladeData.getCharges() <= 0) {
-            UtilMessage.simpleMessage(player, "Wind Blade", "You don't have any charges left.");
-            return;
-        }
-
-        UtilMessage.simpleMessage(player, "Wind Blade", "You used <green>Flight<gray>.");
+        UtilMessage.simpleMessage(player, "Wind Blade", "You used <green>Wind Dash<gray>.");
         Vector vec = player.getLocation().getDirection().normalize().multiply(velocityStrength);
         VelocityData velocityData = new VelocityData(vec, velocityStrength, false, 0.0D, 0.25D, 0.6D, false);
         player.setVelocity(velocityData.getVector());
@@ -146,16 +116,16 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
 
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 0.5F, 2.0F);
 
-        windBladeData.useCharge();
-        notifyCharges(player, windBladeData.getCharges());
-
         active.put(player, System.currentTimeMillis());
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (isHoldingWeapon(player) && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && championsManager.getCooldowns().use(player, "Wall Kick", windBurstCooldown, false)) {
+        if (isHoldingWeapon(player) && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && championsManager.getCooldowns().use(player, "Wind Burst", windBurstCooldown, false)) {
+            if (!energyHandler.use(player, ABILITY_NAME, energyCost, true)) {
+                return;
+            }
             drawLines(player);
             UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.2F, 2.0F);
         }
@@ -214,12 +184,14 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                     if (index < line.getPoints().size()) {
                         Location point = line.getPoints().get(index);
                         player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, point, 1, 0, 0, 0, 0);
-                        player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, point, 1, 0.8, 0.1, 0.3, 0);
 
                         // Check for nearby entities and damage them
                         for (LivingEntity target : UtilEntity.getNearbyEnemies(player, point, windChargeRadius)) {
-                            UtilDamage.doCustomDamage(new CustomDamageEvent(target, player, null, EntityDamageEvent.DamageCause.CUSTOM, windDamage, false, "Wind Burst"));
-                            target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 3));
+                            CustomDamageEvent cde = new CustomDamageEvent(target, player, null, EntityDamageEvent.DamageCause.CUSTOM, windDamage, false, "Wind Burst");
+                            cde.setDamageDelay(0);
+                            UtilDamage.doCustomDamage(cde);
+                            Vector knockback = point.toVector().subtract(player.getLocation().toVector()).normalize().multiply(0.5);
+                            target.setVelocity(knockback);
                             UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
                         }
                     }
@@ -260,31 +232,10 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     }
 
     private void doWindBladeCollision(Player player, LivingEntity target) {
-        target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 3));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 30, 3));
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
         UtilMessage.simpleMessage(player, "Wind Blade", "You hit an enemy with <green>Flight<gray>.");
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1, 2);
-    }
-
-    @UpdateEvent(delay = 100)
-    public void recharge() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!isHoldingWeapon(player)) {
-                continue;
-            }
-
-            WindBladeData data = charges.computeIfAbsent(player, k -> new WindBladeData());
-            if (data.getCharges() < baseMaxCharges && cooldownManager.use(player, ABILITY_NAME, baseRechargeSeconds, false, true, true)) {
-                data.addCharge();
-                notifyCharges(player, data.getCharges());
-
-                trackPlayer(player);
-            }
-        }
-    }
-
-    private void notifyCharges(Player player, int charges) {
-        UtilMessage.simpleMessage(player, "Wind Blade", "Wind Blade Charges: <alt2>" + charges);
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -328,10 +279,11 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
             if (isHoldingWeapon(player)) {
                 if (player.isSneaking()) {
                     player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, Integer.MAX_VALUE, 0, false, false));
-                    player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 1, 0.2, 0.2, 0.2, 0);
-                    player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.5F, 0.0F);
+                    if (!UtilBlock.isGrounded(player)) {
+                        player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 1, 0.2, 0.2, 0.2, 0);
+                        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.3F, 1.0F);
 
-
+                    }
                 } else {
                     player.removePotionEffect(PotionEffectType.SLOW_FALLING);
                 }
@@ -356,33 +308,18 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
 
     @Override
     public double getEnergy() {
-        return initialEnergyCost;
+        return dashEnergyCost;
     }
 
     @Override
     public void loadWeaponConfig() {
         velocityStrength = getConfig("velocityStrength", 1.2, Double.class);
-        baseMaxCharges = getConfig("baseMaxCharges", 1, Integer.class);
-        baseRechargeSeconds = getConfig("baseRechargeSeconds", 3.0, Double.class);
         windChargeRadius = getConfig("windChargeRadius", 2.0, Double.class);
-        windDamage = getConfig("windDamage", 7.0, Double.class);
+        windDamage = getConfig("windDamage", 1.0, Double.class);
         lineStartDistance = getConfig("lineStartDistance", 1.0, Double.class);
         particleDuration = getConfig("particleDuration", 10, Integer.class);
-        windBurstCooldown = getConfig("windBurstCooldown", 1.0, Double.class);
-    }
-
-    private void trackPlayer(Player player) {
-        Gamer gamer = clientManager.search().online(player).getGamer();
-        if (gamer != null) {
-            gamer.getActionBar().add(900, actionBarComponent);
-        }
-    }
-
-    private void invalidatePlayer(Player player) {
-        Gamer gamer = clientManager.search().online(player).getGamer();
-        if (gamer != null) {
-            gamer.getActionBar().remove(actionBarComponent);
-        }
-        charges.remove(player);
+        windBurstCooldown = getConfig("windBurstCooldown", 0.75, Double.class);
+        energyCost = getConfig("energyCost", 15, Integer.class);
+        dashEnergyCost = getConfig("dashEnergyCost", 40, Integer.class);
     }
 }
