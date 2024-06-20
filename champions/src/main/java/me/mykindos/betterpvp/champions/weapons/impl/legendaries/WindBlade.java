@@ -47,14 +47,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WindBlade extends ChannelWeapon implements InteractWeapon, LegendaryWeapon, Listener {
 
     private static final String ABILITY_NAME = "Wind Dash";
+    private static final String ABILITY_NAME_2 = "Wind Slash";
     private double windChargeRadius;
     private double windDamage;
     private double velocityStrength;
     private double lineStartDistance;
     private int particleDuration;
     private double windBurstCooldown;
-    public int energyCost;
+    public int windBurstEnergyCost;
     public int dashEnergyCost;
+    public double knockbackStrength;
+    public double energyRegenerationPercent;
+    public double levitationDuration;
+    public int levitationStrength;
     private final EnergyHandler energyHandler;
     private final ChampionsManager championsManager;
     private final ClientManager clientManager;
@@ -63,7 +68,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     private final Map<Player, Long> active = new ConcurrentHashMap<>();
     private final Map<Player, List<List<Line>>> playerLines = new HashMap<>();
     private final Map<Player, List<Integer>> playerLineIndices = new HashMap<>();
-    private final Set<Player> trackedPlayers = ConcurrentHashMap.newKeySet();
+    private final Map<Player, Set<LivingEntity>> hitTargets = new ConcurrentHashMap<>();
 
     @Inject
     public WindBlade(Champions champions, EnergyHandler energyHandler, ChampionsManager championsManager, CooldownManager cooldownManager, ClientManager clientManager) {
@@ -86,16 +91,15 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         lore.add(Component.text(""));
         lore.add(UtilMessage.deserialize("<white>Deals <yellow>%.1f Damage <white>with attack", baseDamage));
         lore.add(UtilMessage.deserialize("<yellow>Right-Click <white>to use <green>%s<green>", ABILITY_NAME));
-        lore.add(UtilMessage.deserialize("<yellow>Left-Click <white>to use <green>Wind Burst<green>"));
-        lore.add(UtilMessage.deserialize("<yellow>Crouch <white>to use <green>Glide<green>"));
+        lore.add(UtilMessage.deserialize("<yellow>Left-Click <white>to use <green>" + ABILITY_NAME_2 + "<green>"));
         return lore;
     }
 
     @Override
     public void activate(Player player) {
-        UtilMessage.simpleMessage(player, "Wind Blade", "You used <green>Wind Dash<gray>.");
+        UtilMessage.simpleMessage(player, "Wind Blade", "You used <green>" + ABILITY_NAME + "<gray>.");
         Vector vec = player.getLocation().getDirection().normalize().multiply(velocityStrength);
-        VelocityData velocityData = new VelocityData(vec, velocityStrength, false, 0.0D, 0.25D, 0.6D, false);
+        VelocityData velocityData = new VelocityData(vec, velocityStrength, false, 0.0D, 0.4D, 0.8D, true);
         player.setVelocity(velocityData.getVector());
 
         new BukkitRunnable() {
@@ -121,12 +125,17 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (isHoldingWeapon(player) && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && championsManager.getCooldowns().use(player, "Wind Burst", windBurstCooldown, false)) {
-            if (!energyHandler.use(player, ABILITY_NAME, energyCost, true)) {
-                return;
+        if ((event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && isHoldingWeapon(player)) {
+
+            if(this.cooldownManager.use(player, ABILITY_NAME_2, windBurstCooldown, false, true, false, gmr -> isHoldingWeapon(player), 900)){
+                if (!energyHandler.use(player, ABILITY_NAME_2, windBurstEnergyCost, true)) {
+                    return;
+                }
+                drawLines(player);
+                UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.2F, 2.0F);
+                // Reset hit targets for this player
+                hitTargets.put(player, new HashSet<>());
             }
-            drawLines(player);
-            UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.2F, 2.0F);
         }
     }
 
@@ -186,12 +195,20 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                         player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, point, 1, 0, 0, 0, 0);
 
                         for (LivingEntity target : UtilEntity.getNearbyEnemies(player, point, windChargeRadius)) {
+                            if (hitTargets.getOrDefault(player, Collections.emptySet()).contains(target)) {
+                                continue;
+                            }
+
                             CustomDamageEvent cde = new CustomDamageEvent(target, player, null, EntityDamageEvent.DamageCause.CUSTOM, windDamage, false, "Wind Burst");
-                            cde.setDamageDelay(0);
                             UtilDamage.doCustomDamage(cde);
-                            Vector knockback = point.toVector().subtract(player.getLocation().toVector()).normalize().multiply(0.5);
+                            Vector knockback = point.toVector().subtract(player.getLocation().toVector()).normalize().multiply(knockbackStrength);
                             target.setVelocity(knockback);
                             UtilSound.playSound(target.getWorld(), target.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
+
+                            hitTargets.computeIfAbsent(player, k -> new HashSet<>()).add(target);
+
+                            // Regenerate energy when hitting a target
+                            energyHandler.regenerateEnergy(player, energyRegenerationPercent); // 0.1 here represents 10 energy in the EnergyHandler system
                         }
                     }
                 }
@@ -208,6 +225,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
             Player player = next.getKey();
             if (player.isDead()) {
                 it.remove();
+                hitTargets.remove(player);
                 continue;
             }
 
@@ -221,19 +239,21 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
             if (hit.isPresent()) {
                 it.remove();
                 doWindBladeCollision(player, hit.get());
+                hitTargets.remove(player);
                 continue;
             }
 
             if (UtilBlock.isGrounded(player) && UtilTime.elapsed(next.getValue(), 750L)) {
                 it.remove();
+                hitTargets.remove(player);
             }
         }
     }
 
     private void doWindBladeCollision(Player player, LivingEntity target) {
-        target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 30, 3));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, (int)(20 * levitationDuration), levitationStrength));
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
-        UtilMessage.simpleMessage(player, "Wind Blade", "You hit an enemy with <green>Flight<gray>.");
+        UtilMessage.simpleMessage(player, "Wind Blade", "You hit an enemy with <green>" + ABILITY_NAME + "<gray>.");
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1, 2);
     }
 
@@ -264,35 +284,6 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         }
     }
 
-    @EventHandler
-    public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
-        Player player = event.getPlayer();
-        if (isHoldingWeapon(player)) {
-            trackedPlayers.add(player);
-        }
-    }
-
-    @UpdateEvent
-    public void checkSneaking() {
-        for (Player player : trackedPlayers) {
-            if (isHoldingWeapon(player)) {
-                if (player.isSneaking()) {
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, Integer.MAX_VALUE, 0, false, false));
-                    if (!UtilBlock.isGrounded(player)) {
-                        player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 1, 0.2, 0.2, 0.2, 0);
-                        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.3F, 1.0F);
-
-                    }
-                } else {
-                    player.removePotionEffect(PotionEffectType.SLOW_FALLING);
-                }
-            } else {
-                trackedPlayers.remove(player);
-                player.removePotionEffect(PotionEffectType.SLOW_FALLING);
-            }
-        }
-    }
-
     @Override
     public boolean canUse(Player player) {
         if (UtilBlock.isInLiquid(player)) {
@@ -315,11 +306,15 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     public void loadWeaponConfig() {
         velocityStrength = getConfig("velocityStrength", 1.2, Double.class);
         windChargeRadius = getConfig("windChargeRadius", 2.0, Double.class);
-        windDamage = getConfig("windDamage", 1.0, Double.class);
+        windDamage = getConfig("windDamage", 5.0, Double.class);
         lineStartDistance = getConfig("lineStartDistance", 1.0, Double.class);
         particleDuration = getConfig("particleDuration", 10, Integer.class);
-        windBurstCooldown = getConfig("windBurstCooldown", 0.75, Double.class);
-        energyCost = getConfig("energyCost", 15, Integer.class);
-        dashEnergyCost = getConfig("dashEnergyCost", 40, Integer.class);
+        levitationDuration = getConfig("levitationDuration", 1.5, Double.class);
+        windBurstCooldown = getConfig("windBurstCooldown", 2.5, Double.class);
+        windBurstEnergyCost = getConfig("windBurstEnergyCost", 0, Integer.class);
+        dashEnergyCost = getConfig("dashEnergyCost", 60, Integer.class);
+        energyRegenerationPercent = getConfig("energyRegenerationPercent", 0.2 ,Double.class);
+        knockbackStrength = getConfig("knockbackStrength", 0.0, Double.class);
+        levitationStrength = getConfig("levitationStrength", 1, Integer.class);
     }
 }
