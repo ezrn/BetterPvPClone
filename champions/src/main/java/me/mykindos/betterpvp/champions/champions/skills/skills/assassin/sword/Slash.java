@@ -1,6 +1,5 @@
 package me.mykindos.betterpvp.champions.champions.skills.skills.assassin.sword;
 
-
 import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.Skill;
@@ -18,6 +17,7 @@ import me.mykindos.betterpvp.core.utilities.UtilLocation;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.math.VectorLine;
 import me.mykindos.betterpvp.core.utilities.model.MultiRayTraceResult;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -84,31 +84,33 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
     public void activate(Player player, int level) {
         final Location originalLocation = player.getLocation();
         UtilLocation.teleportForward(player, getDistance(level), false, success -> {
-            Particle.SWEEP_ATTACK.builder().location(player.getLocation()).count(1).receivers(30).extra(0).spawn();
-            player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0F, 1.6F);
+            Bukkit.getScheduler().runTask(champions, () -> {
+                Particle.SWEEP_ATTACK.builder().location(player.getLocation()).count(1).receivers(30).extra(0).spawn();
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0F, 1.6F);
 
-            if (!success) {
-                return;
-            }
+                if (!success) {
+                    return;
+                }
 
-            final Location teleportLocation = player.getLocation();
-            final Location lineStart = player.getLocation().add(0.0, player.getHeight() / 2, 0.0);
-            final Location lineEnd = teleportLocation.clone().add(0.0, player.getHeight() / 2, 0.0);
-            final VectorLine line = VectorLine.withStepSize(lineStart, lineEnd, 0.25f);
-            for (Location point : line.toLocations()) {
-                player.getWorld().spawnParticle(Particle.CRIT, point, 2, 0, 0, 0, 0);
-            }
+                final Location teleportLocation = player.getLocation();
+                final Location lineStart = player.getLocation().add(0.0, player.getHeight() / 2, 0.0);
+                final Location lineEnd = teleportLocation.clone().add(0.0, player.getHeight() / 2, 0.0);
+                final VectorLine line = VectorLine.withStepSize(lineStart, lineEnd, 0.25f);
+                for (Location point : line.toLocations()) {
+                    player.getWorld().spawnParticle(Particle.CRIT, point, 2, 0, 0, 0, 0);
+                }
 
-            // Collision
-            UtilEntity.interpolateMultiCollision(originalLocation,
-                            teleportLocation,
-                            0.5f,
-                            ent -> UtilEntity.IS_ENEMY.test(player, ent))
-                    .map(MultiRayTraceResult::stream)
-                    .ifPresentOrElse(stream -> stream.map(RayTraceResult::getHitEntity)
-                                    .map(LivingEntity.class::cast)
-                                    .forEach(hit -> hit(player, level, hit)),
-                            () -> player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.5F, 1.4F));
+                // Collision
+                UtilEntity.interpolateMultiCollision(originalLocation,
+                                teleportLocation,
+                                0.5f,
+                                ent -> UtilEntity.IS_ENEMY.test(player, ent))
+                        .map(MultiRayTraceResult::stream)
+                        .ifPresentOrElse(stream -> stream.map(RayTraceResult::getHitEntity)
+                                        .map(LivingEntity.class::cast)
+                                        .forEach(hit -> hit(player, level, hit)),
+                                () -> player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 0.5F, 1.5F));
+            });
         });
     }
 
@@ -118,12 +120,11 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
         UtilDamage.doCustomDamage(cde);
 
         if (!cde.isCancelled()) {
-            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT, 0.6f, 2f);
-            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ITEM_TRIDENT_HIT, 0.6f, 1.5f);
+            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT, 0.8f, 2f);
+            hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ITEM_TRIDENT_HIT, 0.8f, 1.5f);
 
             UtilMessage.simpleMessage(caster, getClassType().getName(), "You <alt>Slashed</alt> <alt2>" + hit.getName() + "</alt2> for " + getDamage(level) + " damage.");
 
-            // Feedback for the player being hit by the slash
             if (hit instanceof Player) {
                 UtilMessage.simpleMessage((Player) hit, getClassType().getName(), "You were <alt>Slashed</alt> by <alt2>" + caster.getName() + "</alt2> for <alt>" + getDamage(level) + "</alt> damage.");
             }

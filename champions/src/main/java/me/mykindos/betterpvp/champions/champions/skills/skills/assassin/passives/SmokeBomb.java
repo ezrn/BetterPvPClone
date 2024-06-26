@@ -160,6 +160,15 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
     }
 
     @EventHandler
+    public void onPickup(PlayerAttemptPickupItemEvent event) {
+        if(allowPickupItems) return;
+        Player player = event.getPlayer();
+        if (smoked.containsKey(player.getUniqueId())) {
+            interact(player);
+        }
+    }
+
+    @EventHandler
     public void onDamage(CustomDamageEvent event) {
         if (event.getDamager() instanceof Player player && smoked.containsKey(player.getUniqueId())
                 && (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK)) {
@@ -171,9 +180,7 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
                 // While smoke bombed, cancel melee damage from enemies
                 event.setCancelled(true);
             } else if (event.getCause() != EntityDamageEvent.DamageCause.POISON
-                    && !event.hasReason("Bleed")
-                    && event.getCause() != EntityDamageEvent.DamageCause.FIRE
-                    && event.getCause() != EntityDamageEvent.DamageCause.FIRE_TICK) {
+                    && !event.hasReason("Bleed")) {
                 smoked.remove(player.getUniqueId());
                 reappear(player);
             }
@@ -224,7 +231,7 @@ public class SmokeBomb extends Skill implements CooldownToggleSkill, Listener {
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         blindDuration = getConfig("blindDuration", 1.75, Double.class);
         blindRadius = getConfig("blindRadius", 4.0, Double.class);
-        allowPickupItems = getConfig("allowPickupItems", false, Boolean.class);
+        allowPickupItems = getConfig("allowPickupItems", true, Boolean.class);
     }
 
 }

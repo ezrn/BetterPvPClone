@@ -15,18 +15,18 @@ skills:
       damageIncreasePerLevel: 0.0
     sever:
       enabled: true
-      cooldown: 20.0
+      cooldown: 25.0
       maxlevel: 3
-      cooldownDecreasePerLevel: 1.0
-      baseDuration: 1.0
-      durationIncreasePerLevel: 1.0
+      cooldownDecreasePerLevel: 7.5
+      baseDuration: 3.0
+      durationIncreasePerLevel: 0.0
       hitDistance: 4.0
     shockingstrikes:
       enabled: true
       maxlevel: 3
       baseDuration: 1.0
       durationIncreasePerLevel: 1.0
-      slownessDuration: 1.0
+      slownessDuration: 0.5
       slownessStrength: 1
     viperstrikes:
       enabled: true
@@ -50,22 +50,23 @@ skills:
       blindRadius: 4.0
       cooldownDecreasePerLevel: 5.0
       durationIncreasePerLevel: 1.0
-      allowPickupItems: false
+      allowPickupItems: true
     silencingarrow:
       enabled: true
-      maxlevel: 5
+      maxlevel: 3
       cooldown: 15.0
       baseDuration: 3.0
-      cooldownDecreasePerLevel: 0.5
-      durationIncreasePerLevel: 1.0
+      cooldownDecreasePerLevel: 3.5
+      durationIncreasePerLevel: 2.0
     smokearrow:
       enabled: true
-      maxlevel: 4
+      maxlevel: 3
       cooldown: 20.0
-      baseDuration: 4.0
-      cooldownDecreasePerLevel: 2.0
-      durationIncreasePerLevel: 1.0
+      baseDuration: 3.0
+      cooldownDecreasePerLevel: 5.0
+      durationIncreasePerLevel: 2.0
       slownessStrength: 1
+      concussionStrength: 1
     silencingstrikes:
       enabled: true
       maxlevel: 3
@@ -114,7 +115,7 @@ skills:
       maxTravelDistance: 9
       canUseWhileSlowed: false
       cooldownDecreasePerLevel: 0.0
-      distanceIncreasePerLevel: 3
+      distanceIncreasePerLevel: 2
       deblinkTime: 4
       deblinkTimeIncreasePerLevel: 0
     flash:
@@ -128,25 +129,26 @@ skills:
       rechargeReductionPerLevel: 1.0
     markedfordeath:
       enabled: true
-      maxlevel: 5
+      maxlevel: 3
       cooldown: 25.0
       baseDuration: 4.0
-      cooldownDecreasePerLevel: 2.0
-      durationIncreasePerLevel: 1.0
-      vulnerabilityStrength: 3
+      cooldownDecreasePerLevel: 5.0
+      durationIncreasePerLevel: 2.0
+      extraDamage: 2.0
+      extraDamageIncreasePerLevel: 2.0
     toxicarrow:
       enabled: true
-      maxlevel: 5
+      maxlevel: 3
       cooldown: 14.0
       baseDuration: 4.0
-      cooldownDecreasePerLevel: 1.0
-      durationIncreasePerLevel: 1.0
+      cooldownDecreasePerLevel: 3.0
+      durationIncreasePerLevel: 2.0
       poisonStrength: 2
     recall:
       enabled: true
       maxlevel: 3
       cooldown: 28.0
-      healthRecovered: 5.0
+      healthRecovered: 4.0
       duration: 2.0
       canUseWhileSlowed: false
       cooldownDecreasePerLevel: 2.0

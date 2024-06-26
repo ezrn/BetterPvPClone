@@ -1,4 +1,3 @@
-
 package me.mykindos.betterpvp.champions.champions.skills.skills.assassin.bow;
 
 import com.destroystokyo.paper.ParticleBuilder;
@@ -10,33 +9,40 @@ import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
 import me.mykindos.betterpvp.champions.champions.skills.types.PrepareArrowSkill;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
-import me.mykindos.betterpvp.core.effects.EffectTypes;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
 import me.mykindos.betterpvp.core.utilities.UtilFormat;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
+import me.mykindos.betterpvp.core.utilities.UtilPlayer;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.EventHandler;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Singleton
 @BPvPListener
 public class MarkedForDeath extends PrepareArrowSkill {
 
-
     private double baseDuration;
-
     private double durationIncreasePerLevel;
+    private double extraDamage;
+    private double extraDamageIncreasePerLevel;
 
-    private int vulnerabilityStrength;
+    private final Map<UUID, Long> markedPlayers = new HashMap<>();
+    private final Map<UUID, Double> damageModifiers = new HashMap<>();
 
     @Inject
     public MarkedForDeath(Champions champions, ChampionsManager championsManager) {
         super(champions, championsManager);
     }
-
 
     @Override
     public String getName() {
@@ -45,21 +51,26 @@ public class MarkedForDeath extends PrepareArrowSkill {
 
     @Override
     public String[] getDescription(int level) {
-
         return new String[]{
                 "Left click with a Bow to prepare",
                 "",
-                "Your next arrow will give players <effect>Vulnerability " + UtilFormat.getRomanNumeral(vulnerabilityStrength) + "</effect>",
+                "Your next arrow will mark players for death",
                 "for <val>" + getDuration(level) + "</val> seconds,",
+                "dealing <val>" + getExtraDamage(level) + "</val> extra damage",
+                "on the next damage instance they take.",
+                "If the marked player dies within this duration,",
+                "you will regain 5 health points.",
                 "",
-                "Cooldown: <val>" + getCooldown(level),
-                "",
-                EffectTypes.VULNERABILITY.getDescription(vulnerabilityStrength)
+                "Cooldown: <val>" + getCooldown(level)
         };
     }
 
     public double getDuration(int level) {
-        return (baseDuration + ((level - 1) * durationIncreasePerLevel));
+        return baseDuration + ((level - 1) * durationIncreasePerLevel);
+    }
+
+    public double getExtraDamage(int level) {
+        return extraDamage + ((level - 1) * extraDamageIncreasePerLevel);
     }
 
     @Override
@@ -74,10 +85,21 @@ public class MarkedForDeath extends PrepareArrowSkill {
 
     @Override
     public void onHit(Player damager, LivingEntity target, int level) {
-        UtilMessage.simpleMessage(damager, getClassType().getName(), "You hit <yellow>%s</yellow> with <green>%s %s</green>.", target.getName(), getName(), level);
-        championsManager.getEffects().addEffect(target, EffectTypes.VULNERABILITY, vulnerabilityStrength, (long) (getDuration(level) * 1000L));
         if (!(target instanceof Player damagee)) return;
+
+        UtilMessage.simpleMessage(damager, getClassType().getName(), "You hit <yellow>%s</yellow> with <green>%s %s</green>.", target.getName(), getName(), level);
         UtilMessage.simpleMessage(damagee, getClassType().getName(), "<alt2>%s</alt2> hit you with <alt>%s %s</alt>.", damager.getName(), getName(), level);
+
+        long duration = (long) (getDuration(level) * 1000L);
+        markedPlayers.put(damagee.getUniqueId(), System.currentTimeMillis() + duration);
+        damageModifiers.put(damagee.getUniqueId(), getExtraDamage(level));
+
+        show(damager, List.of(damager), damagee);
+        champions.getServer().getScheduler().runTaskLater(champions, () -> {
+            markedPlayers.remove(damagee.getUniqueId());
+            damageModifiers.remove(damagee.getUniqueId());
+            hide(damager, List.of(damager), damagee);
+        }, duration / 50); // Convert milliseconds to ticks
     }
 
     @Override
@@ -90,7 +112,6 @@ public class MarkedForDeath extends PrepareArrowSkill {
                 .receivers(60)
                 .spawn();
     }
-
 
     @Override
     public double getCooldown(int level) {
@@ -111,7 +132,57 @@ public class MarkedForDeath extends PrepareArrowSkill {
     @Override
     public void loadSkillConfig() {
         baseDuration = getConfig("baseDuration", 4.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
-        vulnerabilityStrength = getConfig("vulnerabilityStrength", 3, Integer.class);
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 2.0, Double.class);
+        extraDamage = getConfig("extraDamage", 2.0, Double.class);
+        extraDamageIncreasePerLevel = getConfig("extraDamageIncreasePerLevel", 2.0, Double.class);
+    }
+
+    @EventHandler
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Player damagee)) return;
+        if (!(event.getDamager() instanceof Player damager)) return;
+
+        UUID damageeUUID = damagee.getUniqueId();
+        if (markedPlayers.containsKey(damageeUUID)) {
+            long endTime = markedPlayers.get(damageeUUID);
+            if (System.currentTimeMillis() <= endTime) {
+                double extraDamage = damageModifiers.get(damageeUUID);
+                event.setDamage(event.getDamage() + extraDamage);
+                damageModifiers.remove(damageeUUID);
+                markedPlayers.remove(damageeUUID);
+                hide(damager, List.of(damager), damagee);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+        Player deceased = event.getEntity();
+        UUID deceasedUUID = deceased.getUniqueId();
+        if (markedPlayers.containsKey(deceasedUUID)) {
+            Player killer = deceased.getKiller();
+            if (killer != null) {
+                long endTime = markedPlayers.get(deceasedUUID);
+                if (System.currentTimeMillis() <= endTime) {
+                    killer.setHealth(Math.min(killer.getHealth() + 5.0, killer.getMaxHealth()));
+                    markedPlayers.remove(deceasedUUID);
+                    damageModifiers.remove(deceasedUUID);
+                }
+            }
+        }
+    }
+
+    private void show(Player player, List<Player> allies, Player target) {
+        UtilPlayer.setGlowing(player, target, true);
+        for (Player ally : allies) {
+            UtilPlayer.setGlowing(ally, target, true);
+        }
+    }
+
+    private void hide(Player player, List<Player> allies, Player target) {
+        UtilPlayer.setGlowing(player, target, false);
+        for (Player ally : allies) {
+            UtilPlayer.setGlowing(ally, target, false);
+        }
     }
 }

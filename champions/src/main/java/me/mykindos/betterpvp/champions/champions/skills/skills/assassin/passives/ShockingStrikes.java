@@ -81,7 +81,7 @@ public class ShockingStrikes extends Skill implements PassiveSkill, Listener {
     public void loadSkillConfig() {
         baseDuration = getConfig("baseDuration", 1.0, Double.class);
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
-        slownessDuration = getConfig("slownessDuration", 1.0, Double.class);
+        slownessDuration = getConfig("slownessDuration", 0.5, Double.class);
         slownessStrength = getConfig("slownessStrength", 1, Integer.class);
     }
 }
