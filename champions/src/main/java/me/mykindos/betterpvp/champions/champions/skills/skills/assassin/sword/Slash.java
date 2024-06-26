@@ -15,6 +15,7 @@ import me.mykindos.betterpvp.core.utilities.UtilEntity;
 import me.mykindos.betterpvp.core.utilities.UtilFormat;
 import me.mykindos.betterpvp.core.utilities.UtilLocation;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
+import me.mykindos.betterpvp.core.utilities.UtilServer;
 import me.mykindos.betterpvp.core.utilities.math.VectorLine;
 import me.mykindos.betterpvp.core.utilities.model.MultiRayTraceResult;
 import org.bukkit.Bukkit;
@@ -84,33 +85,36 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
     public void activate(Player player, int level) {
         final Location originalLocation = player.getLocation();
         UtilLocation.teleportForward(player, getDistance(level), false, success -> {
-            Bukkit.getScheduler().runTask(champions, () -> {
+            UtilServer.runTask(champions, false, () -> {
                 Particle.SWEEP_ATTACK.builder().location(player.getLocation()).count(1).receivers(30).extra(0).spawn();
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0F, 1.6F);
+            });
 
-                if (!success) {
-                    return;
-                }
+            if (!success) {
+                return;
+            }
 
-                final Location teleportLocation = player.getLocation();
-                final Location lineStart = player.getLocation().add(0.0, player.getHeight() / 2, 0.0);
-                final Location lineEnd = teleportLocation.clone().add(0.0, player.getHeight() / 2, 0.0);
-                final VectorLine line = VectorLine.withStepSize(lineStart, lineEnd, 0.25f);
+            final Location teleportLocation = player.getLocation();
+            final Location lineStart = player.getLocation().add(0.0, player.getHeight() / 2, 0.0);
+            final Location lineEnd = teleportLocation.clone().add(0.0, player.getHeight() / 2, 0.0);
+            final VectorLine line = VectorLine.withStepSize(lineStart, lineEnd, 0.25f);
+
+            UtilServer.runTask(champions, false, () -> {
                 for (Location point : line.toLocations()) {
                     player.getWorld().spawnParticle(Particle.CRIT, point, 2, 0, 0, 0, 0);
                 }
-
-                // Collision
-                UtilEntity.interpolateMultiCollision(originalLocation,
-                                teleportLocation,
-                                0.5f,
-                                ent -> UtilEntity.IS_ENEMY.test(player, ent))
-                        .map(MultiRayTraceResult::stream)
-                        .ifPresentOrElse(stream -> stream.map(RayTraceResult::getHitEntity)
-                                        .map(LivingEntity.class::cast)
-                                        .forEach(hit -> hit(player, level, hit)),
-                                () -> player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 0.5F, 1.5F));
             });
+
+            // Collision
+            UtilEntity.interpolateMultiCollision(originalLocation,
+                            teleportLocation,
+                            0.5f,
+                            ent -> UtilEntity.IS_ENEMY.test(player, ent))
+                    .map(MultiRayTraceResult::stream)
+                    .ifPresentOrElse(stream -> stream.map(RayTraceResult::getHitEntity)
+                                    .map(LivingEntity.class::cast)
+                                    .forEach(hit -> hit(player, level, hit)),
+                            () -> player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 0.5F, 1.5F));
         });
     }
 
