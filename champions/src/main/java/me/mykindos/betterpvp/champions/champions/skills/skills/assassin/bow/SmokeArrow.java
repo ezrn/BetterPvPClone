@@ -50,7 +50,8 @@ public class SmokeArrow extends PrepareArrowSkill {
                 "Left click with a Bow to prepare",
                 "",
                 "Your next arrow will give <effect>Blindness</effect>",
-                "<Concussion> and <effect>Slowness " + UtilFormat.getRomanNumeral(slownessStrength) + "</effect> to the target for <val>" + getEffectDuration(level) + "</val> seconds.",
+                "<effect>Concussion</effect> and <effect>Slowness " + UtilFormat.getRomanNumeral(slownessStrength) + "</effect> to the",
+                "target for <val>" + getEffectDuration(level) + "</val> seconds.",
                 "",
                 "Cooldown: <val>" + getCooldown(level)
         };

@@ -49,7 +49,7 @@ public class BleedEffect extends VanillaEffectType {
 
             var cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, bleedDamage, false, "Bleed");
             if((livingEntity.getHealth() - bleedDamage) <= 0) {
-                cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, (livingEntity.getHealth() - 0.1), false, "Bleed");
+                cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, (livingEntity.getHealth() - 1), false, "Bleed");
             }
             cde.setIgnoreArmour(true);
             UtilDamage.doCustomDamage(cde);

@@ -7,6 +7,7 @@ import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
 import me.mykindos.betterpvp.champions.champions.skills.types.PrepareArrowSkill;
+import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
@@ -21,7 +22,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.EntityDamageEvent;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,11 +97,11 @@ public class MarkedForDeath extends PrepareArrowSkill {
         markedPlayers.put(damagee.getUniqueId(), System.currentTimeMillis() + duration);
         damageModifiers.put(damagee.getUniqueId(), getExtraDamage(level));
 
-        show(damager, List.of(damager), damagee);
+        show(damager, Collections.singletonList(damager), damagee);
         champions.getServer().getScheduler().runTaskLater(champions, () -> {
             markedPlayers.remove(damagee.getUniqueId());
             damageModifiers.remove(damagee.getUniqueId());
-            hide(damager, List.of(damager), damagee);
+            hide(damager, Collections.singletonList(damager), damagee);
         }, duration / 50); // Convert milliseconds to ticks
     }
 
@@ -132,25 +135,26 @@ public class MarkedForDeath extends PrepareArrowSkill {
     @Override
     public void loadSkillConfig() {
         baseDuration = getConfig("baseDuration", 4.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 2.0, Double.class);
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         extraDamage = getConfig("extraDamage", 2.0, Double.class);
         extraDamageIncreasePerLevel = getConfig("extraDamageIncreasePerLevel", 2.0, Double.class);
     }
 
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player damagee)) return;
-        if (!(event.getDamager() instanceof Player damager)) return;
+    public void onCustomDamage(CustomDamageEvent event) {
+        if (event.getCause() != EntityDamageEvent.DamageCause.SUFFOCATION) return;
+        if (event.getDamager() == null) return;
+        if (!(event.getDamagee() instanceof Player player)) return;
 
-        UUID damageeUUID = damagee.getUniqueId();
-        if (markedPlayers.containsKey(damageeUUID)) {
-            long endTime = markedPlayers.get(damageeUUID);
+        UUID playerUUID = player.getUniqueId();
+        if (markedPlayers.containsKey(playerUUID)) {
+            long endTime = markedPlayers.get(playerUUID);
             if (System.currentTimeMillis() <= endTime) {
-                double extraDamage = damageModifiers.get(damageeUUID);
+                double extraDamage = damageModifiers.get(playerUUID);
                 event.setDamage(event.getDamage() + extraDamage);
-                damageModifiers.remove(damageeUUID);
-                markedPlayers.remove(damageeUUID);
-                hide(damager, List.of(damager), damagee);
+                damageModifiers.remove(playerUUID);
+                markedPlayers.remove(playerUUID);
+                hide((Player) event.getDamager(), Collections.singletonList((Player) event.getDamager()), player);
             }
         }
     }

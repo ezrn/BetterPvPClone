@@ -134,14 +134,14 @@ skills:
       baseDuration: 4.0
       cooldownDecreasePerLevel: 5.0
       durationIncreasePerLevel: 2.0
-      extraDamage: 2.0
+      extraDamage: 2.0Smoke
       extraDamageIncreasePerLevel: 2.0
     toxicarrow:
       enabled: true
       maxlevel: 3
       cooldown: 14.0
       baseDuration: 4.0
-      cooldownDecreasePerLevel: 3.0
+      cooldownDecreasePerLevel: 2.0
       durationIncreasePerLevel: 2.0
       poisonStrength: 2
     recall:

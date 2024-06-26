@@ -127,7 +127,7 @@ public class Slash extends Skill implements InteractSkill, CooldownSkill, Listen
             hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT, 0.8f, 2f);
             hit.getWorld().playSound(hit.getLocation().add(0, 1, 0), Sound.ITEM_TRIDENT_HIT, 0.8f, 1.5f);
 
-            UtilMessage.simpleMessage(caster, getClassType().getName(), "You <alt>Slashed</alt> <alt2>" + hit.getName() + "</alt2> for " + getDamage(level) + " damage.");
+            UtilMessage.simpleMessage(caster, getClassType().getName(), "You <alt>Slashed</alt> <alt2>" + hit.getName() + "</alt2> for <alt>" + getDamage(level) + "</alt> damage.");
 
             if (hit instanceof Player) {
                 UtilMessage.simpleMessage((Player) hit, getClassType().getName(), "You were <alt>Slashed</alt> by <alt2>" + caster.getName() + "</alt2> for <alt>" + getDamage(level) + "</alt> damage.");
