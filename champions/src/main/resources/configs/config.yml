@@ -30,7 +30,7 @@ command:
     seeOtherPlayerSkillsRank: ADMIN
 combat:
   arrow-base-damage: 6.0
-  arrow-assassin-damage: 5.0
+  assassin-arrow-damage: 5.0
   crit-arrows: true
   crossbow:
     cooldownDuration: 1.5

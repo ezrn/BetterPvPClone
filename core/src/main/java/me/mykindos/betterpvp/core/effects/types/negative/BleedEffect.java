@@ -42,23 +42,25 @@ public class BleedEffect extends VanillaEffectType {
 
         long currentTime = System.currentTimeMillis();
         long lastBleedTime = lastBleedTimes.getOrDefault(livingEntity.getUniqueId(), 0L);
-        int marginOfError = 20;
+        int marginOfError = 20; // Increase margin of error to avoid additional ticks
 
         if (currentTime - lastBleedTime >= 1000 - marginOfError) {
             // Apply damage to any LivingEntity (including players)
-
-            var cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, bleedDamage, false, "Bleed");
-            if((livingEntity.getHealth() - bleedDamage) <= 0) {
-                cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, (livingEntity.getHealth() - 1), false, "Bleed");
+            double damageToApply = bleedDamage;
+            if (livingEntity.getHealth() - bleedDamage <= 1) {
+                damageToApply = livingEntity.getHealth() - 1;
             }
-            cde.setIgnoreArmour(true);
-            UtilDamage.doCustomDamage(cde);
 
-            livingEntity.getWorld().playSound(livingEntity.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT_FREEZE, 1f, 2f);
-            livingEntity.getWorld().playEffect(livingEntity.getLocation().add(0, 1, 0), org.bukkit.Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
+            if (damageToApply > 0) {
+                CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, damageToApply, false, "Bleed");
+                cde.setIgnoreArmour(true);
+                UtilDamage.doCustomDamage(cde);
 
-            lastBleedTimes.put(livingEntity.getUniqueId(), currentTime);
+                livingEntity.getWorld().playSound(livingEntity.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT_FREEZE, 1f, 2f);
+                livingEntity.getWorld().playEffect(livingEntity.getLocation().add(0, 1, 0), org.bukkit.Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
+
+                lastBleedTimes.put(livingEntity.getUniqueId(), currentTime);
+            }
         }
     }
-
 }

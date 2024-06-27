@@ -7,6 +7,8 @@ import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
 import me.mykindos.betterpvp.champions.champions.skills.types.PrepareArrowSkill;
+import me.mykindos.betterpvp.core.combat.damagelog.DamageLog;
+import me.mykindos.betterpvp.core.combat.damagelog.DamageLogManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
@@ -23,6 +25,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,13 +41,15 @@ public class MarkedForDeath extends PrepareArrowSkill {
     private double durationIncreasePerLevel;
     private double extraDamage;
     private double extraDamageIncreasePerLevel;
+    private final DamageLogManager damageLogManager;
 
     private final Map<UUID, Long> markedPlayers = new HashMap<>();
     private final Map<UUID, Double> damageModifiers = new HashMap<>();
 
     @Inject
-    public MarkedForDeath(Champions champions, ChampionsManager championsManager) {
+    public MarkedForDeath(Champions champions, ChampionsManager championsManager, DamageLogManager damageLogManager) {
         super(champions, championsManager);
+        this.damageLogManager = damageLogManager;
     }
 
     @Override
@@ -58,11 +63,12 @@ public class MarkedForDeath extends PrepareArrowSkill {
                 "Left click with a Bow to prepare",
                 "",
                 "Your next arrow will mark players for death",
-                "for <val>" + getDuration(level) + "</val> seconds,",
-                "dealing <val>" + getExtraDamage(level) + "</val> extra damage",
-                "on the next damage instance they take.",
+                "for <val>" + getDuration(level) + "</val> seconds, causing their next",
+                "instance of damage to be increased by <val>" + getExtraDamage(level) + "</val>",
+                "and making them glow",
+                "",
                 "If the marked player dies within this duration,",
-                "you will regain 5 health points.",
+                "you will regain <stat>5</stat> health points",
                 "",
                 "Cooldown: <val>" + getCooldown(level)
         };
@@ -100,7 +106,6 @@ public class MarkedForDeath extends PrepareArrowSkill {
         show(damager, Collections.singletonList(damager), damagee);
         champions.getServer().getScheduler().runTaskLater(champions, () -> {
             markedPlayers.remove(damagee.getUniqueId());
-            damageModifiers.remove(damagee.getUniqueId());
             hide(damager, Collections.singletonList(damager), damagee);
         }, duration / 50); // Convert milliseconds to ticks
     }
@@ -142,39 +147,42 @@ public class MarkedForDeath extends PrepareArrowSkill {
 
     @EventHandler
     public void onCustomDamage(CustomDamageEvent event) {
-        if (event.getCause() != EntityDamageEvent.DamageCause.SUFFOCATION) return;
         if (event.getDamager() == null) return;
         if (!(event.getDamagee() instanceof Player player)) return;
 
         UUID playerUUID = player.getUniqueId();
-        if (markedPlayers.containsKey(playerUUID)) {
+        if (markedPlayers.containsKey(playerUUID) && damageModifiers.containsKey(playerUUID)) {
             long endTime = markedPlayers.get(playerUUID);
             if (System.currentTimeMillis() <= endTime) {
                 double extraDamage = damageModifiers.get(playerUUID);
                 event.setDamage(event.getDamage() + extraDamage);
                 damageModifiers.remove(playerUUID);
-                markedPlayers.remove(playerUUID);
-                hide((Player) event.getDamager(), Collections.singletonList((Player) event.getDamager()), player);
             }
         }
     }
 
     @EventHandler
-    public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+    public void onPlayerDeath(PlayerDeathEvent event) {
         Player deceased = event.getEntity();
         UUID deceasedUUID = deceased.getUniqueId();
         if (markedPlayers.containsKey(deceasedUUID)) {
-            Player killer = deceased.getKiller();
-            if (killer != null) {
-                long endTime = markedPlayers.get(deceasedUUID);
-                if (System.currentTimeMillis() <= endTime) {
-                    killer.setHealth(Math.min(killer.getHealth() + 5.0, killer.getMaxHealth()));
-                    markedPlayers.remove(deceasedUUID);
-                    damageModifiers.remove(deceasedUUID);
-                }
+
+            DamageLog lastDamager = damageLogManager.getLastDamager(event.getEntity());
+            if (lastDamager == null) return;
+            if (!(lastDamager.getDamager() instanceof Player killer)) return;
+            int level = getLevel(killer);
+            if (level <= 0) return;
+
+            long endTime = markedPlayers.get(deceasedUUID);
+            if (System.currentTimeMillis() <= endTime) {
+                killer.setHealth(Math.min(killer.getHealth() + 5.0, killer.getMaxHealth()));
+                UtilMessage.simpleMessage(killer, "You have regained <alt>5<alt> health for killing a marked player.");
+                markedPlayers.remove(deceasedUUID);
+                damageModifiers.remove(deceasedUUID);
             }
         }
     }
+
 
     private void show(Player player, List<Player> allies, Player target) {
         UtilPlayer.setGlowing(player, target, true);

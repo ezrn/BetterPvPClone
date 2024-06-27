@@ -1,5 +1,6 @@
 package me.mykindos.betterpvp.champions.listeners;
 
+import com.google.inject.Singleton;
 import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.roles.RoleManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
@@ -24,6 +25,7 @@ import javax.inject.Inject;
 import java.util.HashMap;
 
 @BPvPListener
+@Singleton
 public class ArrowListener implements Listener {
     private final RoleManager roleManager;
 
@@ -35,7 +37,8 @@ public class ArrowListener implements Listener {
     @Config(path = "combat.arrow-base-damage", defaultValue = "6.0")
     private double baseArrowDamage;
 
-    @Config(path = "combat.arrow-assassin-damage", defaultValue = "5.0")
+    @Inject
+    @Config(path = "combat.assassin-arrow-damage", defaultValue = "5.0")
     private double assassinArrowDamage;
     private final HashMap<Arrow, Float> arrows = new HashMap<>();
 
