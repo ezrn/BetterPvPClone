@@ -6,6 +6,7 @@ import com.google.inject.Singleton;
 import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
+import me.mykindos.betterpvp.champions.champions.skills.types.DebuffSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.PrepareArrowSkill;
 import me.mykindos.betterpvp.core.combat.damagelog.DamageLog;
 import me.mykindos.betterpvp.core.combat.damagelog.DamageLogManager;
@@ -36,7 +37,7 @@ import java.util.UUID;
 
 @Singleton
 @BPvPListener
-public class MarkedForDeath extends PrepareArrowSkill {
+public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
 
     private double baseDuration;
     private double durationIncreasePerLevel;
@@ -59,14 +60,14 @@ public class MarkedForDeath extends PrepareArrowSkill {
                 "Left click with a Bow to prepare",
                 "",
                 "Your next arrow will mark players for death",
-                "for <val>" + getDuration(level) + "</val> seconds, causing their next",
-                "instance of damage to be increased by <val>" + (2 * level) + "</val>",
+                "for <val>" + getValueString(this::getDuration, level) + "</val> seconds, causing their next",
+                "instance of damage to be increased by <val>" + (getDamage(level)) + "</val>",
                 "and making them glow",
                 "",
                 "If the marked player dies within this duration,",
                 "you will regain <stat>5</stat> health points",
                 "",
-                "Cooldown: <val>" + getCooldown(level)
+                "Cooldown: " + getValueString(this::getCooldown, level),
         };
     }
 
@@ -74,8 +75,12 @@ public class MarkedForDeath extends PrepareArrowSkill {
         return markedStrength * ((level - 1) * markedStrengthIncreasePerLevel);
     }
 
+    public double getDamage(int level){
+        return (getAmplifier(level) * 2.0);
+    }
+
     public double getDuration(int level) {
-        return baseDuration + ((level - 1) * durationIncreasePerLevel);
+        return (baseDuration + ((level - 1) * durationIncreasePerLevel));
     }
 
     @Override

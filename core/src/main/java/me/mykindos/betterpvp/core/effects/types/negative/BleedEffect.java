@@ -17,7 +17,6 @@ import java.util.UUID;
 public class BleedEffect extends VanillaEffectType {
 
     private final Map<UUID, Long> lastBleedTimes = new HashMap<>();
-    private final double bleedDamage = 2.0;
 
     @Override
     public String getName() {
@@ -45,21 +44,21 @@ public class BleedEffect extends VanillaEffectType {
         int marginOfError = 20;
 
         if (currentTime - lastBleedTime >= 1000 - marginOfError) {
-            double damageToApply = bleedDamage;
-            if (livingEntity.getHealth() - bleedDamage <= 1) {
-                damageToApply = livingEntity.getHealth() - 1;
-            }
+            // Apply damage to any LivingEntity (including players)
 
-            if (damageToApply > 0) {
-                CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, damageToApply, false, "Bleed");
-                cde.setIgnoreArmour(true);
-                UtilDamage.doCustomDamage(cde);
+            var cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, 1.5, false, "Bleed");
+            cde.setIgnoreArmour(true);
+            UtilDamage.doCustomDamage(cde);
 
-                livingEntity.getWorld().playSound(livingEntity.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT_FREEZE, 1f, 2f);
-                livingEntity.getWorld().playEffect(livingEntity.getLocation().add(0, 1, 0), org.bukkit.Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
+            livingEntity.getWorld().playSound(livingEntity.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT_FREEZE, 1f, 2f);
+            livingEntity.getWorld().playEffect(livingEntity.getLocation().add(0, 1, 0), org.bukkit.Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
 
-                lastBleedTimes.put(livingEntity.getUniqueId(), currentTime);
-            }
+            lastBleedTimes.put(livingEntity.getUniqueId(), currentTime);
         }
+    }
+
+    @Override
+    public String getDescription(int level) {
+        return "<white>" + getName() + "</white> deals <val>1.5</val> damage per second";
     }
 }

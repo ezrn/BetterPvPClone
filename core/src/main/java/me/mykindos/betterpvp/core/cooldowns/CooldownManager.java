@@ -39,39 +39,116 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
     @Inject
     private ClientManager clientManager;
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform) {
         return use(player, ability, duration, inform, true);
     }
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @param removeOnDeath
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform, boolean removeOnDeath) {
         return use(player, ability, duration, inform, removeOnDeath, false, x -> false);
     }
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @param removeOnDeath
+     * @param cancellable
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform, boolean removeOnDeath, boolean cancellable) {
         return use(player, ability, duration, inform, removeOnDeath, cancellable, x -> false);
     }
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @param removeOnDeath
+     * @param cancellable
+     * @param actionBar
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform, boolean removeOnDeath, boolean cancellable, boolean actionBar) {
         return use(player, ability, duration, inform, removeOnDeath, cancellable, x -> actionBar);
     }
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @param removeOnDeath
+     * @param cancellable
+     * @param actionBarCondition
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform, boolean removeOnDeath, boolean cancellable, @Nullable Predicate<Gamer> actionBarCondition) {
         return use(player, ability, duration, inform, removeOnDeath, cancellable, actionBarCondition, 1000);
     }
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @param removeOnDeath
+     * @param cancellable
+     * @param actionBarCondition
+     * @param actionBarPriority
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform, boolean removeOnDeath, boolean cancellable, @Nullable Predicate<Gamer> actionBarCondition, int actionBarPriority) {
         return use(player, ability, duration, inform, removeOnDeath, cancellable, actionBarCondition, actionBarPriority, null);
     }
 
+    /**
+     *
+     * @param player
+     * @param ability
+     * @param duration
+     * @param inform
+     * @param removeOnDeath
+     * @param cancellable
+     * @param actionBarCondition
+     * @param actionBarPriority
+     * @param onExpire
+     * @return TRUE if ability is used, FALSE if a cooldown is already present
+     */
     public boolean use(Player player, String ability, double duration, boolean inform, boolean removeOnDeath, boolean cancellable, @Nullable Predicate<Gamer> actionBarCondition, int actionBarPriority, Consumer<Cooldown> onExpire) {
         final Gamer gamer = clientManager.search().online(player).getGamer();
 
 
+        // We add 1.5f to the duration in seconds, so they can see that it expired, and it doesn't instantly disappear
         TimedComponent actionBarComponent = null;
-
-        if (actionBarCondition != null && actionBarCondition.test(gamer)) {
-            // We add 1.5f to the duration in seconds, so they can see that it expired, and it doesn't instantly disappear
+        if (actionBarCondition != null) {
             actionBarComponent = new TimedComponent(duration + 1.5, false, g -> {
+
+                if (!actionBarCondition.test(gamer)) {
+                    return null; // Skip if we should not send the action bar message;
+                }
 
                 final TextComponent cooldownName = Component.text(ability).decorate(TextDecoration.BOLD).color(NamedTextColor.WHITE);
                 final Optional<ConcurrentHashMap<String, Cooldown>> cooldowns = getObject(player.getUniqueId());
@@ -97,7 +174,6 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
                 return Component.join(JoinConfiguration.separator(Component.space()), cooldownName, bar, cooldownRemaining);
             });
         }
-
 
         var cooldownOptional = getObject(player.getUniqueId().toString()).or(() -> {
             ConcurrentHashMap<String, Cooldown> cooldowns = new ConcurrentHashMap<>();
@@ -133,7 +209,7 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
             if (!event.isCancelled()) {
                 cooldowns.put(ability, cooldown);
 
-                if(actionBarComponent != null) {
+                if (actionBarComponent != null) {
                     gamer.getActionBar().add(actionBarPriority, actionBarComponent);
                 }
                 return true;
@@ -146,6 +222,12 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
         return false;
     }
 
+    /**
+     *
+     * @param player the player to check for
+     * @param ability the ability to check for
+     * @return TRUE if ability is on cooldown for player, FALSE if not on cooldown
+     */
     public boolean hasCooldown(Player player, String ability) {
 
         Optional<ConcurrentHashMap<String, Cooldown>> cooldownOptional = getObject(player.getUniqueId().toString());
@@ -197,7 +279,7 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
             var cooldowns = cooldownOptional.get();
             if (cooldowns.containsKey(ability)) {
                 Cooldown cooldown = cooldowns.remove(ability);
-                if(cooldown.getOnExpire() != null) {
+                if (cooldown.getOnExpire() != null) {
                     cooldown.getOnExpire().accept(cooldown);
                 }
 
@@ -221,7 +303,7 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
 
                             Client client = clientManager.search().online(player);
                             final boolean soundSetting = (boolean) client.getProperty(ClientProperty.COOLDOWN_SOUNDS_ENABLED).orElse(false);
-                            if(soundSetting){
+                            if (soundSetting) {
                                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.4f, 3.0f);
                             }
 
@@ -229,7 +311,7 @@ public class CooldownManager extends Manager<ConcurrentHashMap<String, Cooldown>
                         }
                     }
 
-                    if(cd.getOnExpire() != null) {
+                    if (cd.getOnExpire() != null) {
                         cd.getOnExpire().accept(cd);
                     }
                     return true;

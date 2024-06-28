@@ -9,6 +9,8 @@ import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.Skill;
 import me.mykindos.betterpvp.champions.champions.skills.skills.assassin.data.RecallData;
 import me.mykindos.betterpvp.champions.champions.skills.types.CooldownToggleSkill;
+import me.mykindos.betterpvp.champions.champions.skills.types.HealthSkill;
+import me.mykindos.betterpvp.champions.champions.skills.types.MovementSkill;
 import me.mykindos.betterpvp.core.client.gamer.Gamer;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
@@ -30,7 +32,7 @@ import java.util.WeakHashMap;
 
 @Singleton
 @BPvPListener
-public class Recall extends Skill implements CooldownToggleSkill, Listener {
+public class Recall extends Skill implements CooldownToggleSkill, Listener, MovementSkill, HealthSkill {
 
     public static final long MARKER_MILLIS = 200;
     private final Map<Player, RecallData> data = new WeakHashMap<>();
@@ -58,9 +60,9 @@ public class Recall extends Skill implements CooldownToggleSkill, Listener {
                 "Drop your Sword / Axe to activate",
                 "",
                 "Teleports you back in time <val>" + getDuration(level) + "</val> seconds, increasing",
-                "your health by <stat>" + (healthRecovered),
+                "your health by <stat>" + healthRecovered,
                 "",
-                "Cooldown: <val>" + getCooldown(level)
+                "Cooldown: " + getValueString(this::getCooldown, level)
         };
     }
 
