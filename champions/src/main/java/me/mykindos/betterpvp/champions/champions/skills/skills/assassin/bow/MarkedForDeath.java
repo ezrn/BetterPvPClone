@@ -12,6 +12,7 @@ import me.mykindos.betterpvp.core.combat.damagelog.DamageLogManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
+import me.mykindos.betterpvp.core.effects.EffectTypes;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
 import me.mykindos.betterpvp.core.utilities.UtilFormat;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
@@ -39,17 +40,12 @@ public class MarkedForDeath extends PrepareArrowSkill {
 
     private double baseDuration;
     private double durationIncreasePerLevel;
-    private double extraDamage;
-    private double extraDamageIncreasePerLevel;
-    private final DamageLogManager damageLogManager;
-
-    private final Map<UUID, Long> markedPlayers = new HashMap<>();
-    private final Map<UUID, Double> damageModifiers = new HashMap<>();
+    private int markedStrengthIncreasePerLevel;
+    private int markedStrength;
 
     @Inject
-    public MarkedForDeath(Champions champions, ChampionsManager championsManager, DamageLogManager damageLogManager) {
+    public MarkedForDeath(Champions champions, ChampionsManager championsManager) {
         super(champions, championsManager);
-        this.damageLogManager = damageLogManager;
     }
 
     @Override
@@ -64,7 +60,7 @@ public class MarkedForDeath extends PrepareArrowSkill {
                 "",
                 "Your next arrow will mark players for death",
                 "for <val>" + getDuration(level) + "</val> seconds, causing their next",
-                "instance of damage to be increased by <val>" + getExtraDamage(level) + "</val>",
+                "instance of damage to be increased by <val>" + (2 * level) + "</val>",
                 "and making them glow",
                 "",
                 "If the marked player dies within this duration,",
@@ -74,12 +70,12 @@ public class MarkedForDeath extends PrepareArrowSkill {
         };
     }
 
-    public double getDuration(int level) {
-        return baseDuration + ((level - 1) * durationIncreasePerLevel);
+    public int getAmplifier(int level){
+        return markedStrength * ((level - 1) * markedStrengthIncreasePerLevel);
     }
 
-    public double getExtraDamage(int level) {
-        return extraDamage + ((level - 1) * extraDamageIncreasePerLevel);
+    public double getDuration(int level) {
+        return baseDuration + ((level - 1) * durationIncreasePerLevel);
     }
 
     @Override
@@ -100,14 +96,7 @@ public class MarkedForDeath extends PrepareArrowSkill {
         UtilMessage.simpleMessage(damagee, getClassType().getName(), "<alt2>%s</alt2> hit you with <alt>%s %s</alt>.", damager.getName(), getName(), level);
 
         long duration = (long) (getDuration(level) * 1000L);
-        markedPlayers.put(damagee.getUniqueId(), System.currentTimeMillis() + duration);
-        damageModifiers.put(damagee.getUniqueId(), getExtraDamage(level));
-
-        show(damager, Collections.singletonList(damager), damagee);
-        champions.getServer().getScheduler().runTaskLater(champions, () -> {
-            markedPlayers.remove(damagee.getUniqueId());
-            hide(damager, Collections.singletonList(damager), damagee);
-        }, duration / 50); // Convert milliseconds to ticks
+        championsManager.getEffects().addEffect(damagee, damager, EffectTypes.MARKED, getAmplifier(level), duration);
     }
 
     @Override
@@ -140,61 +129,8 @@ public class MarkedForDeath extends PrepareArrowSkill {
     @Override
     public void loadSkillConfig() {
         baseDuration = getConfig("baseDuration", 4.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
-        extraDamage = getConfig("extraDamage", 2.0, Double.class);
-        extraDamageIncreasePerLevel = getConfig("extraDamageIncreasePerLevel", 2.0, Double.class);
-    }
-
-    @EventHandler
-    public void onCustomDamage(CustomDamageEvent event) {
-        if (event.getDamager() == null) return;
-        if (!(event.getDamagee() instanceof Player player)) return;
-
-        UUID playerUUID = player.getUniqueId();
-        if (markedPlayers.containsKey(playerUUID) && damageModifiers.containsKey(playerUUID)) {
-            long endTime = markedPlayers.get(playerUUID);
-            if (System.currentTimeMillis() <= endTime) {
-                double extraDamage = damageModifiers.get(playerUUID);
-                event.setDamage(event.getDamage() + extraDamage);
-                damageModifiers.remove(playerUUID);
-            }
-        }
-    }
-
-    @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        Player deceased = event.getEntity();
-        UUID deceasedUUID = deceased.getUniqueId();
-        if (markedPlayers.containsKey(deceasedUUID)) {
-
-            DamageLog lastDamager = damageLogManager.getLastDamager(event.getEntity());
-            if (lastDamager == null) return;
-            if (!(lastDamager.getDamager() instanceof Player killer)) return;
-            int level = getLevel(killer);
-            if (level <= 0) return;
-
-            long endTime = markedPlayers.get(deceasedUUID);
-            if (System.currentTimeMillis() <= endTime) {
-                killer.setHealth(Math.min(killer.getHealth() + 5.0, killer.getMaxHealth()));
-                UtilMessage.simpleMessage(killer, "You have regained <alt>5<alt> health for killing a marked player.");
-                markedPlayers.remove(deceasedUUID);
-                damageModifiers.remove(deceasedUUID);
-            }
-        }
-    }
-
-
-    private void show(Player player, List<Player> allies, Player target) {
-        UtilPlayer.setGlowing(player, target, true);
-        for (Player ally : allies) {
-            UtilPlayer.setGlowing(ally, target, true);
-        }
-    }
-
-    private void hide(Player player, List<Player> allies, Player target) {
-        UtilPlayer.setGlowing(player, target, false);
-        for (Player ally : allies) {
-            UtilPlayer.setGlowing(ally, target, false);
-        }
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 2.0, Double.class);
+        markedStrength = getConfig("markedStrength", 1, Integer.class);
+        markedStrengthIncreasePerLevel = getConfig("markedStrengthIncreasePerLevel", 1, Integer.class);
     }
 }

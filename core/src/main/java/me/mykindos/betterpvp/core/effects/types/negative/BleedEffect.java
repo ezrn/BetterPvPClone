@@ -42,10 +42,9 @@ public class BleedEffect extends VanillaEffectType {
 
         long currentTime = System.currentTimeMillis();
         long lastBleedTime = lastBleedTimes.getOrDefault(livingEntity.getUniqueId(), 0L);
-        int marginOfError = 20; // Increase margin of error to avoid additional ticks
+        int marginOfError = 20;
 
         if (currentTime - lastBleedTime >= 1000 - marginOfError) {
-            // Apply damage to any LivingEntity (including players)
             double damageToApply = bleedDamage;
             if (livingEntity.getHealth() - bleedDamage <= 1) {
                 damageToApply = livingEntity.getHealth() - 1;
