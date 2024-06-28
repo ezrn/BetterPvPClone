@@ -61,7 +61,7 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
                 "",
                 "Your next arrow will mark players for death",
                 "for <val>" + getValueString(this::getDuration, level) + "</val> seconds, causing their next",
-                "instance of damage to be increased by <val>" + (getDamage(level)) + "</val>",
+                "instance of damage to be increased by <val>" + getValueString(this::getDamage, level) + "</val>",
                 "and making them glow",
                 "",
                 "If the marked player dies within this duration,",
@@ -72,7 +72,7 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
     }
 
     public int getAmplifier(int level){
-        return markedStrength * ((level - 1) * markedStrengthIncreasePerLevel);
+        return markedStrength + ((level - 1) * markedStrengthIncreasePerLevel);
     }
 
     public double getDamage(int level){
@@ -134,7 +134,7 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
     @Override
     public void loadSkillConfig() {
         baseDuration = getConfig("baseDuration", 4.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 2.0, Double.class);
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         markedStrength = getConfig("markedStrength", 1, Integer.class);
         markedStrengthIncreasePerLevel = getConfig("markedStrengthIncreasePerLevel", 1, Integer.class);
     }

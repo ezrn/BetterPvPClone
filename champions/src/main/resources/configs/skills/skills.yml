@@ -56,8 +56,8 @@ skills:
       maxlevel: 3
       cooldown: 15.0
       baseDuration: 3.0
-      cooldownDecreasePerLevel: 3.5
-      durationIncreasePerLevel: 2.0
+      cooldownDecreasePerLevel: 2.5
+      durationIncreasePerLevel: 1.5
     smokearrow:
       enabled: true
       maxlevel: 3
@@ -112,7 +112,7 @@ skills:
       enabled: true
       cooldown: 12.0
       maxlevel: 5
-      maxTravelDistance: 9
+      maxTravelDistance: 12
       canUseWhileSlowed: false
       cooldownDecreasePerLevel: 0.0
       distanceIncreasePerLevel: 2
@@ -133,17 +133,18 @@ skills:
       cooldown: 25.0
       baseDuration: 4.0
       cooldownDecreasePerLevel: 5.0
-      durationIncreasePerLevel: 2.0
+      durationIncreasePerLevel: 1.0
       markedStrength: 1
       markedStrengthIncreasePerLevel: 1
     toxicarrow:
       enabled: true
       maxlevel: 3
       cooldown: 14.0
-      baseDuration: 4.0
+      baseDuration: 5.0
       cooldownDecreasePerLevel: 2.0
-      durationIncreasePerLevel: 2.0
-      poisonStrength: 2
+      durationIncreasePerLevel: 0.0
+      poisonStrength: 1
+      poisonStrengthIncreasePerLevel: 1
     recall:
       enabled: true
       maxlevel: 3

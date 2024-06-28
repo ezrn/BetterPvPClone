@@ -17,6 +17,7 @@ import java.util.UUID;
 public class BleedEffect extends VanillaEffectType {
 
     private final Map<UUID, Long> lastBleedTimes = new HashMap<>();
+    private final double bleedDamage = 1.5;
 
     @Override
     public String getName() {
@@ -44,9 +45,19 @@ public class BleedEffect extends VanillaEffectType {
         int marginOfError = 20;
 
         if (currentTime - lastBleedTime >= 1000 - marginOfError) {
-            // Apply damage to any LivingEntity (including players)
+            double currentHealth = livingEntity.getHealth();
+            double damageToDeal = bleedDamage;
 
-            var cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, 1.5, false, "Bleed");
+            if (currentHealth > bleedDamage) {
+                damageToDeal = bleedDamage;
+            } else if (currentHealth > 1.0) {
+                damageToDeal = currentHealth - 1.0;
+            } else {
+                lastBleedTimes.put(livingEntity.getUniqueId(), currentTime);
+                return;
+            }
+
+            CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, damageToDeal, false, "Bleed");
             cde.setIgnoreArmour(true);
             UtilDamage.doCustomDamage(cde);
 
@@ -59,6 +70,6 @@ public class BleedEffect extends VanillaEffectType {
 
     @Override
     public String getDescription(int level) {
-        return "<white>" + getName() + "</white> deals <val>1.5</val> damage per second";
+        return "<white>" + getName() + "</white> deals <val>" + bleedDamage + "</val> damage per second";
     }
 }

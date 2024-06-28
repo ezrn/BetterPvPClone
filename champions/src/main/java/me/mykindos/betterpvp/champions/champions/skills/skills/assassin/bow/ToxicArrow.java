@@ -33,6 +33,7 @@ public class ToxicArrow extends PrepareArrowSkill implements DebuffSkill {
     private double durationIncreasePerLevel;
 
     private int poisonStrength;
+    private int poisonStrengthIncreasePerLevel;
 
     @Inject
     public ToxicArrow(Champions champions, ChampionsManager championsManager) {
@@ -51,17 +52,21 @@ public class ToxicArrow extends PrepareArrowSkill implements DebuffSkill {
                 "Left click with a Bow to prepare",
                 "",
                 "Your next arrow will give your target ",
-                "<effect>Poison " + UtilFormat.getRomanNumeral(poisonStrength) + "</effect> for " + getValueString(this::getDuration, level) + " seconds",
+                "<effect>Poison " + UtilFormat.getRomanNumeral(getPoisonStrength(level)) + "</effect> for " + getValueString(this::getDuration, level) + " seconds",
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level),
                 "",
-                EffectTypes.POISON.getDescription(poisonStrength)
+                EffectTypes.POISON.getDescription(getPoisonStrength(level))
 
         };
     }
 
     public double getDuration(int level) {
         return (baseDuration + (level - 1) * durationIncreasePerLevel);
+    }
+
+    public int getPoisonStrength(int level){
+        return poisonStrength + ((level - 1) * poisonStrengthIncreasePerLevel);
     }
 
     @Override
@@ -96,7 +101,7 @@ public class ToxicArrow extends PrepareArrowSkill implements DebuffSkill {
 
     @Override
     public void onHit(Player damager, LivingEntity target, int level) {
-        championsManager.getEffects().addEffect(target, EffectTypes.POISON, poisonStrength, (long) ((baseDuration + level) * 1000L));
+        championsManager.getEffects().addEffect(target, EffectTypes.POISON, getPoisonStrength(level), (long) ((baseDuration + level) * 1000L));
         UtilMessage.message(damager, getClassType().getName(), "You hit <yellow>%s</yellow> with <green>%s %s</green>.", target.getName(), getName(), level);
         if (!(target instanceof Player damagee)) return;
         UtilMessage.simpleMessage(damagee, getClassType().getName(), "<alt2>%s</alt2> hit you with <alt>%s %s</alt>.", damager.getName(), getName(), level);
@@ -130,5 +135,6 @@ public class ToxicArrow extends PrepareArrowSkill implements DebuffSkill {
         baseDuration = getConfig("baseDuration", 4.0, Double.class);
         durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         poisonStrength = getConfig("poisonStrength", 2, Integer.class);
+        poisonStrengthIncreasePerLevel = getConfig("poisonStrengthIncreasePerLevel", 1, Integer.class);
     }
 }

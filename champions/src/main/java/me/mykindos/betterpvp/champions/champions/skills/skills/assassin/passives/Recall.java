@@ -59,7 +59,7 @@ public class Recall extends Skill implements CooldownToggleSkill, Listener, Move
         return new String[] {
                 "Drop your Sword / Axe to activate",
                 "",
-                "Teleports you back in time <val>" + getDuration(level) + "</val> seconds, increasing",
+                "Teleports you back in time <val>" + getValueString(this::getDuration, level) + "</val> seconds, increasing",
                 "your health by <stat>" + healthRecovered,
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level)
