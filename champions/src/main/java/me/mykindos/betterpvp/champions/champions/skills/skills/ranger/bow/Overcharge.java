@@ -8,10 +8,8 @@ import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.Skill;
 import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
-import me.mykindos.betterpvp.champions.champions.skills.types.DamageSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.InteractSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.OffensiveSkill;
-import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
 import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
@@ -27,36 +25,32 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.meta.CrossbowMeta;
+import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.WeakHashMap;
+import java.util.*;
 
 @Singleton
 @BPvPListener
-public class Overcharge extends Skill implements InteractSkill, Listener, DamageSkill, OffensiveSkill {
+public class Overcharge extends Skill implements InteractSkill, Listener, OffensiveSkill {
 
     private final WeakHashMap<Player, OverchargeData> data = new WeakHashMap<>();
-    private final WeakHashMap<Arrow, Integer> bonus = new WeakHashMap<>();
+    private final WeakHashMap<Arrow, OverchargeArrowData> bonus = new WeakHashMap<>();
     private final List<Arrow> arrows = new ArrayList<>();
     private final Set<UUID> charging = new HashSet<>();
-    private double baseDamage;
-    private double damageIncreasePerLevel;
+    private double baseExtraVelocity;
+    private double extraVelocityIncreasePerLevel;
     private double baseDuration;
     private double durationDecreasePerLevel;
-    private double baseMaxDamage;
-    private double maxDamageIncreasePerLevel;
+    private double baseMaxExtraVelocity;
+    private double maxExtraVelocityIncreasePerLevel;
+    private double baseKnockbackStrength;
+    private double knockbackStrengthIncreasePerLevel;
 
     @Inject
     public Overcharge(Champions champions, ChampionsManager championsManager) {
@@ -70,23 +64,27 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
 
     @Override
     public String[] getDescription(int level) {
-
         return new String[]{
                 "Hold right click with a Bow to use",
                 "",
                 "Draw back harder on your bow, giving",
-                getValueString(this::getDamage, level) + " bonus damage per " + getValueString(this::getDuration, level) + "</val> seconds",
+                getValueString(this::getExtraVelocity, level) + "% extra velocity per " + getValueString(this::getDuration, level) + " seconds,",
+                "increasing knockback strength by " + getValueString(this::getKnockbackStrength, level) + "%.",
                 "",
-                "Maximum Damage: " + getValueString(this::getMaxDamage, level)
+                "Maximum Velocity: " + getValueString(this::getMaxExtraVelocity, level) + "%"
         };
     }
 
-    public double getDamage(int level) {
-        return baseDamage + ((level - 1) * damageIncreasePerLevel);
+    public double getExtraVelocity(int level) {
+        return baseExtraVelocity + ((level - 1) * extraVelocityIncreasePerLevel);
     }
 
-    public double getMaxDamage(int level) {
-        return baseMaxDamage + ((level - 1) * maxDamageIncreasePerLevel);
+    public double getMaxExtraVelocity(int level) {
+        return baseMaxExtraVelocity + ((level - 1) * maxExtraVelocityIncreasePerLevel);
+    }
+
+    public double getKnockbackStrength(int level) {
+        return baseKnockbackStrength + ((level - 1) * knockbackStrengthIncreasePerLevel);
     }
 
     private double getDuration(int level) {
@@ -98,12 +96,10 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
         return Role.RANGER;
     }
 
-
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         charging.remove(event.getPlayer().getUniqueId());
     }
-
 
     @EventHandler
     public void onPlayerShoot(EntityShootBowEvent event) {
@@ -113,24 +109,64 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
         if (hasSkill(player)) {
             OverchargeData overchargeData = data.get(player);
             if (overchargeData != null) {
-                bonus.put(arrow, overchargeData.getCharge());
+                double charge = overchargeData.getCharge();
+                bonus.put(arrow, new OverchargeArrowData(charge, player.getLocation().getDirection()));
                 data.remove(player);
+
+                // Apply the velocity increase
+                Vector velocity = arrow.getVelocity();
+                Vector originalVelocity = velocity.clone();
+                velocity = velocity.multiply(1 + charge / 100.0);
+                arrow.setVelocity(velocity);
+
+                // Debug message for arrow velocity application
+                Bukkit.getLogger().info(String.format(
+                        "Arrow shot by player %s with original velocity %s. Applied velocity: %s. Charge: %.2f%%. Location: %s",
+                        player.getName(), originalVelocity, velocity, charge, arrow.getLocation()
+                ));
             }
         }
-
     }
 
-    @UpdateEvent
+    @EventHandler
+    public void onArrowHit(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Arrow arrow)) return;
+        if (!(arrow.getShooter() instanceof Player shooter)) return;
+        if (!(event.getEntity() instanceof Player hitPlayer)) return;
+        OverchargeArrowData overchargeArrowData = bonus.get(arrow);
+        if (overchargeArrowData != null) {
+            Vector originalDirection = overchargeArrowData.getDirection();
+            double chargeMultiplier = 1 + overchargeArrowData.getCharge() / 100.0;
+            Vector knockback = originalDirection.multiply(chargeMultiplier);
+
+            // Log charge multiplier and velocities
+            Bukkit.getLogger().info(String.format(
+                    "Calculating knockback: Player %s hit by arrow shot by %s. Original direction: %s. Charge multiplier: %.2f. Calculated knockback velocity: %s.",
+                    hitPlayer.getName(), shooter.getName(), originalDirection, chargeMultiplier, knockback
+            ));
+
+            hitPlayer.setVelocity(knockback);
+
+            // Log after setting velocity
+            Bukkit.getLogger().info(String.format(
+                    "Applied knockback: Player %s hit by arrow shot by %s. Knockback velocity set to: %s. Charge: %.2f%%. Hit location: %s",
+                    hitPlayer.getName(), shooter.getName(), knockback, overchargeArrowData.getCharge(), hitPlayer.getLocation()
+            ));
+        }
+    }
+
+
+        @UpdateEvent
     public void createRedDustParticles() {
-        bonus.forEach((arrow, bonusDamage) -> {
-            if (arrow.isValid() && !arrow.isDead() && !arrow.isOnGround() && bonus.get(arrow) > 0) {
+        bonus.forEach((arrow, arrowData) -> {
+            if (arrow.isValid() && !arrow.isDead() && !arrow.isOnGround() && bonus.get(arrow) != null) {
 
                 double baseSize = 0.25;
-                double count = (bonus.get(arrow));
+                double count = arrowData.getCharge() / 10;
 
                 double finalSize = baseSize * count;
 
-                Particle.DustOptions redDust = new Particle.DustOptions(Color.fromRGB(255, 0, 0), (float)finalSize);
+                Particle.DustOptions redDust = new Particle.DustOptions(Color.fromRGB(255, 0, 0), (float) finalSize);
                 new ParticleBuilder(Particle.REDSTONE)
                         .location(arrow.getLocation())
                         .count(1)
@@ -143,16 +179,6 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
         });
 
         bonus.keySet().removeIf(arrow -> !arrow.isValid() || arrow.isDead() || arrow.isOnGround());
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onDamage(CustomDamageEvent event) {
-        if (!(event.getProjectile() instanceof Arrow arrow)) return;
-        if (!(event.getDamager() instanceof Player)) return;
-        if (bonus.containsKey(arrow)) {
-            event.setDamage(event.getDamage() + bonus.get(arrow));
-            event.addReason(getName());
-        }
     }
 
     @UpdateEvent
@@ -195,8 +221,8 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
                 if (UtilTime.elapsed(data.getLastCharge(), (long) (getDuration(level) * 1000))) {
                     if (data.getCharge() < data.getMaxCharge()) {
                         data.addCharge();
-                        UtilMessage.simpleMessage(player, getClassType().getName(), "%s: <yellow>+%d<gray> Bonus Damage", getName(), data.getCharge());
-                        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4F, 1.0F + 0.05F * data.getCharge());
+                        UtilMessage.simpleMessage(player, getClassType().getName(), "%s: <yellow>+%d%%<gray> Bonus Velocity", getName(), (int) data.getCharge());
+                        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4F, 1.0F + 0.05F * (float) data.getCharge());
                     }
                 }
             }
@@ -205,17 +231,15 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
         arrows.removeIf(arrow -> arrow.isOnGround() || !arrow.isValid() || arrow.isInsideVehicle());
     }
 
-
     @Override
     public SkillType getType() {
-
         return SkillType.BOW;
     }
 
     @Override
     public void activate(Player player, int level) {
         if (!data.containsKey(player)) {
-            data.put(player, new OverchargeData(player.getUniqueId(), (int) getDamage(level), (int) getMaxDamage(level)));
+            data.put(player, new OverchargeData(player.getUniqueId(), getExtraVelocity(level), getMaxExtraVelocity(level)));
             charging.add(player.getUniqueId());
         }
     }
@@ -233,19 +257,18 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
     @Data
     private static class OverchargeData {
         private final UUID uuid;
-        private final int increment;
-        private final int maxCharge;
+        private final double increment;
+        private final double maxCharge;
 
-        private int charge;
+        private double charge;
         private long lastCharge;
 
-        public OverchargeData(UUID uuid, int increment, int maxCharge) {
+        public OverchargeData(UUID uuid, double increment, double maxCharge) {
             this.uuid = uuid;
             this.charge = 0;
             this.lastCharge = System.currentTimeMillis();
             this.increment = increment;
             this.maxCharge = maxCharge;
-
         }
 
         public void addCharge() {
@@ -256,13 +279,20 @@ public class Overcharge extends Skill implements InteractSkill, Listener, Damage
         }
     }
 
-    public void loadSkillConfig() {
-        baseDamage = getConfig("baseDamage", 1.0, Double.class);
-        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 0.0, Double.class);
-        baseDuration = getConfig("baseDuration", 2.4, Double.class);
-        durationDecreasePerLevel = getConfig("durationDecreasePerLevel", 0.4, Double.class);
+    @Data
+    private static class OverchargeArrowData {
+        private final double charge;
+        private final Vector direction;
+    }
 
-        baseMaxDamage = getConfig("baseMaxDamage", 2.0, Double.class);
-        maxDamageIncreasePerLevel = getConfig("maxDamageIncreasePerLevel", 1.0, Double.class);
+    public void loadSkillConfig() {
+        baseExtraVelocity = getConfig("baseExtraVelocity", 10.0, Double.class);
+        extraVelocityIncreasePerLevel = getConfig("extraVelocityIncreasePerLevel", 0.0, Double.class);
+        baseDuration = getConfig("baseDuration", 2.0, Double.class);
+        durationDecreasePerLevel = getConfig("durationDecreasePerLevel", 0.5, Double.class);
+        baseMaxExtraVelocity = getConfig("baseMaxExtraVelocity", 100.0, Double.class);
+        maxExtraVelocityIncreasePerLevel = getConfig("maxExtraVelocityIncreasePerLevel", 0.0, Double.class);
+        baseKnockbackStrength = getConfig("baseKnockbackStrength", 10.0, Double.class);
+        knockbackStrengthIncreasePerLevel = getConfig("knockbackStrengthIncreasePerLevel", 0.0, Double.class);
     }
 }

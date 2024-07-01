@@ -47,7 +47,6 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
         super(champions, championsManager);
     }
 
-
     @Override
     public String getName() {
         return "Longshot";
@@ -58,7 +57,7 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
 
         return new String[]{
                 "Your arrows now deal damage that increases",
-                "by " + getValueString(this::getDamage, level) + " damage per block it travels",
+                "by " + getValueString(this::getDamage, level) + " damage per horizontal block it travels",
                 "",
                 "Your arrows start at " + getValueString(this::getMinDamage, level) + " damage",
                 "and cap out at " + getValueString(this::getMaxDamage, level) + " damage",
@@ -83,7 +82,6 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
         return Role.RANGER;
     }
 
-
     @UpdateEvent(delay = 200)
     public void update() {
         Iterator<Arrow> it = arrows.keySet().iterator();
@@ -96,10 +94,8 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
             } else {
                 Location location = next.getLocation().add(new Vector(0, 0.25, 0));
                 Particle.FIREWORKS_SPARK.builder().location(location).receivers(60).extra(0).spawn();
-
             }
         }
-
     }
 
     @EventHandler
@@ -114,7 +110,6 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
                 arrows.put(arrow, arrow.getLocation());
             }
         }
-
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -125,19 +120,21 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
 
         Location loc = arrows.remove(arrow);
         int level = getLevel(damager);
-        double length = UtilMath.offset(loc, event.getDamagee().getLocation());
-        double damage = Math.min(getMaxDamage(level), length * getDamage(level));
 
-        event.setDamage(minDamage + (damage));
-        event.addReason(getName() + (length > deathMessageThreshold ? " (" + (int) length + " blocks)" : ""));
+        // Calculate the horizontal distance only
+        Location damageeLocation = event.getDamagee().getLocation();
+        double horizontalDistance = loc.distance(new Location(damageeLocation.getWorld(), damageeLocation.getX(), loc.getY(), damageeLocation.getZ()));
 
+        double damage = Math.min(getMaxDamage(level), horizontalDistance * getDamage(level));
+
+        event.setDamage(minDamage + damage);
+        event.addReason(getName() + (horizontalDistance > deathMessageThreshold ? " (" + (int) horizontalDistance + " blocks)" : ""));
     }
 
     @EventHandler
     public void onDeath(CustomDeathEvent event) {
 
     }
-
 
     @Override
     public SkillType getType() {
@@ -154,5 +151,4 @@ public class Longshot extends Skill implements PassiveSkill, DamageSkill, Offens
 
         deathMessageThreshold = getConfig("deathMessageThreshold", 40.0, Double.class);
     }
-
 }
