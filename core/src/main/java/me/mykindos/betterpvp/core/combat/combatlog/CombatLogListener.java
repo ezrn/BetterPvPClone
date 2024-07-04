@@ -17,9 +17,12 @@ import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Skeleton;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -53,7 +56,6 @@ public class CombatLogListener implements Listener {
         }
     }
 
-    // Always make sure admins or people in creative / spectator are safe logged
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCombatLog(PlayerCombatLogEvent event) {
         if (event.getPlayer().getGameMode() == GameMode.CREATIVE || event.getPlayer().getGameMode() == GameMode.SPECTATOR) {
@@ -80,26 +82,17 @@ public class CombatLogListener implements Listener {
             Material material = Material.valueOf(item);
             if (event.getPlayer().getInventory().contains(material)) {
                 event.setSafe(false);
-                event.setDuration(System.currentTimeMillis());
+                event.setDuration(0); // Set to infinity
                 return;
             }
         }
     }
 
-    @EventHandler (ignoreCancelled = true)
-    public void onCombatLogDamage(CustomDamageEvent event) {
-        if(event.getDamagee().getType() != EntityType.SHEEP) return;
-        combatLogManager.getCombatLogBySheep(event.getDamagee()).ifPresent(combatLog -> {
-            event.cancel("Combat log sheep cannot be damaged");
-        });
-    }
-
     @EventHandler
-    public void onInteractCombatLog(PlayerInteractEntityEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) return;
-        if (event.getRightClicked() instanceof LivingEntity entity) {
-            combatLogManager.getCombatLogBySheep(entity).ifPresent(combatLog -> {
-                combatLog.onClicked(event.getPlayer());
+    public void onSkeletonDeath(EntityDeathEvent event) {
+        if (event.getEntity() instanceof Skeleton skeleton) {
+            combatLogManager.getCombatLogBySkeleton(skeleton).ifPresent(combatLog -> {
+                combatLog.onSkeletonDeath(event);
                 combatLogManager.removeObject(combatLog.getOwner().toString());
             });
         }
@@ -109,8 +102,10 @@ public class CombatLogListener implements Listener {
     public void onCombatLogExpire() {
         combatLogManager.getObjects().entrySet().removeIf(combatLog -> {
             if (combatLog.getValue().hasExpired()) {
-                combatLog.getValue().getCombatLogSheep().remove();
+                combatLog.getValue().getCombatLogSkeleton().remove();
                 return true;
+            } else {
+                combatLog.getValue().updateSkeletonName();
             }
             return false;
         });
@@ -119,10 +114,12 @@ public class CombatLogListener implements Listener {
     @EventHandler
     public void onLoggerReturn(PlayerLoginEvent event) {
         combatLogManager.getObject(event.getPlayer().getUniqueId()).ifPresent(combatLog -> {
-            combatLog.getCombatLogSheep().remove();
+            Player player = event.getPlayer();
+            player.setHealth(combatLog.getCombatLogSkeleton().getHealth());
+            System.out.println("Combat log ")
+            combatLog.getCombatLogSkeleton().remove();
         });
 
         combatLogManager.removeObject(event.getPlayer().getUniqueId().toString());
     }
-
 }

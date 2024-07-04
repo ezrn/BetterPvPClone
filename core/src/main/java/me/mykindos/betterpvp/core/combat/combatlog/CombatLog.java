@@ -2,17 +2,13 @@ package me.mykindos.betterpvp.core.combat.combatlog;
 
 import lombok.CustomLog;
 import lombok.Getter;
-import me.mykindos.betterpvp.core.combat.combatlog.events.PlayerClickCombatLogEvent;
-import me.mykindos.betterpvp.core.combat.nms.CombatSheep;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
-import me.mykindos.betterpvp.core.utilities.UtilServer;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Skeleton;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
@@ -27,50 +23,60 @@ public class CombatLog {
     private final UUID owner;
     private final List<ItemStack> items;
     private final long expiryTime;
-    private final LivingEntity combatLogSheep;
+    private final Skeleton combatLogSkeleton;
     private final String playerName;
+    private final ItemStack[] armorContents;
+    private final double playerHealth;
 
     public CombatLog(Player player, long expiryTime) {
         this.owner = player.getUniqueId();
         this.expiryTime = expiryTime;
         this.playerName = player.getName();
+        this.playerHealth = player.getHealth();
         items = new ArrayList<>();
+        armorContents = player.getInventory().getArmorContents();
+
         for (ItemStack itemStack : player.getInventory().getContents()) {
             if (itemStack == null || itemStack.getType() == Material.AIR) continue;
-
             items.add(itemStack);
         }
 
-        CombatSheep combatSheep = new CombatSheep(player.getLocation());
-        combatLogSheep = (LivingEntity) combatSheep.spawn();
-
-        setupSheep(player);
+        combatLogSkeleton = (Skeleton) player.getWorld().spawnEntity(player.getLocation(), EntityType.SKELETON);
+        setupSkeleton(player);
     }
 
-    private void setupSheep(Player player) {
-        combatLogSheep.customName(Component.text("Right Click Me! ", NamedTextColor.YELLOW, TextDecoration.BOLD)
-                .append(Component.text(player.getName(), NamedTextColor.GRAY)));
-        combatLogSheep.setCustomNameVisible(true);
-        combatLogSheep.setRemoveWhenFarAway(false);
+    private void setupSkeleton(Player player) {
+        combatLogSkeleton.setAI(false);
+        combatLogSkeleton.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(playerHealth);
+        combatLogSkeleton.setHealth(playerHealth);
+        combatLogSkeleton.setCustomNameVisible(true);
+        combatLogSkeleton.setRemoveWhenFarAway(false);
+        combatLogSkeleton.setCanPickupItems(false);
 
-    }
-
-    public void onClicked(Player player) {
-
-        if (Bukkit.getPlayer(owner) != null) {
-            return; // Safety check, shouldn't ever be true but just in case
+        // Set skeleton items
+        ItemStack mainHandItem = player.getInventory().getItemInMainHand();
+        if (mainHandItem != null && mainHandItem.getType() != Material.AIR) {
+            combatLogSkeleton.getEquipment().setItemInMainHand(mainHandItem);
         }
 
-        combatLogSheep.remove();
+        combatLogSkeleton.getEquipment().setArmorContents(armorContents);
+        updateSkeletonName();
+    }
+
+    public void updateSkeletonName() {
+        long timeRemaining = expiryTime - System.currentTimeMillis();
+        String timeDisplay = timeRemaining >= 10000 ? "Infinity" : String.format("%.1f", timeRemaining / 1000.0);
+        String displayName = playerName + " " + timeDisplay;
+        combatLogSkeleton.setCustomName(displayName);
+    }
+
+    public void onSkeletonDeath(EntityDeathEvent event) {
         for (ItemStack stack : items) {
             if (stack == null || stack.getType() == Material.AIR) {
                 continue;
             }
-
-            combatLogSheep.getLocation().getWorld().dropItemNaturally(combatLogSheep.getLocation(), stack);
+            combatLogSkeleton.getLocation().getWorld().dropItemNaturally(combatLogSkeleton.getLocation(), stack);
         }
-
-        UtilServer.callEvent(new PlayerClickCombatLogEvent(player, this));
 
         UtilMessage.broadcast("Log", "<yellow>%s</yellow> dropped their inventory for combat logging.", playerName);
         File file = new File("world/playerdata", owner + ".dat");
