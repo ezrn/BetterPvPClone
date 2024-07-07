@@ -5,6 +5,7 @@ import me.mykindos.betterpvp.core.combat.damagelog.DamageLogManager;
 import me.mykindos.betterpvp.core.effects.Effect;
 import me.mykindos.betterpvp.core.effects.VanillaEffectType;
 import me.mykindos.betterpvp.core.effects.events.EffectExpireEvent;
+import me.mykindos.betterpvp.core.utilities.UtilFormat;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.UtilPlayer;
 import org.bukkit.entity.LivingEntity;
@@ -22,9 +23,8 @@ public class MarkedEffect extends VanillaEffectType {
 
     private final Map<UUID, Long> markedPlayers = new HashMap<>();
     private final DamageLogManager damageLogManager;
-    private final double baseExtraDamage = 2.0;
-    private final double extraDamageIncreasePerLevel = 2.0;
-    private final double healthRegenOnKill = 5.0;
+    private final double baseExtraDamage = 3.0;
+    private final double extraDamageIncreasePerLevel = 3.0;
 
     public MarkedEffect(DamageLogManager damageLogManager) {
         this.damageLogManager = damageLogManager;
@@ -75,22 +75,16 @@ public class MarkedEffect extends VanillaEffectType {
         }
     }
 
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        Player deceased = event.getEntity();
-
-        DamageLog lastDamager = damageLogManager.getLastDamager(event.getEntity());
-        if (lastDamager == null) return;
-        if (!(lastDamager.getDamager() instanceof Player killer)) return;
-
-        killer.setHealth(Math.min(killer.getHealth() + healthRegenOnKill, killer.getMaxHealth()));
-        UtilMessage.simpleMessage(killer, "You have regained <alt>5<alt> health for killing <alt2>" + deceased.getName() + "</alt2>.");
-    }
-
     @Override
     public void onExpire(LivingEntity livingEntity, Effect effect) {
         if (livingEntity instanceof Player player) {
             hide(player, List.of(player), player);
             markedPlayers.remove(player.getUniqueId());
         }
+    }
+
+    @Override
+    public String getDescription(int level) {
+        return "<white>Marked " + UtilFormat.getRomanNumeral(level) + " <reset>makes the target glow and increases the first instance of damage taken by <val>" + baseExtraDamage + (extraDamageIncreasePerLevel * level) + "</val>";
     }
 }

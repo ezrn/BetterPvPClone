@@ -62,11 +62,10 @@ skills:
       enabled: true
       maxlevel: 3
       cooldown: 20.0
-      baseDuration: 3.0
+      baseDuration: 4.0
       cooldownDecreasePerLevel: 5.0
       durationIncreasePerLevel: 2.0
       slownessStrength: 1
-      concussionStrength: 1
     silencingstrikes:
       enabled: true
       maxlevel: 3

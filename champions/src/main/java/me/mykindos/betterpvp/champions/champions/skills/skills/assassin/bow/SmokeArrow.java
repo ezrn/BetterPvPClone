@@ -33,7 +33,6 @@ public class SmokeArrow extends PrepareArrowSkill implements DebuffSkill {
     private double durationIncreasePerLevel;
 
     private int slownessStrength;
-    private int concussionStrength;
 
     @Inject
     public SmokeArrow(Champions champions, ChampionsManager championsManager) {
@@ -51,7 +50,7 @@ public class SmokeArrow extends PrepareArrowSkill implements DebuffSkill {
                 "Left click with a Bow to prepare",
                 "",
                 "Your next arrow will give <effect>Blindness</effect>",
-                "and <effect>Slowness " + UtilFormat.getRomanNumeral(slownessStrength) + "</effect> and <effect>Concussion</effect> to the target for " + getValueString(this::getEffectDuration, level) + " seconds.",
+                "and <effect>Slowness " + UtilFormat.getRomanNumeral(slownessStrength) + "</effect> to the target for " + getValueString(this::getEffectDuration, level) + " seconds.",
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level)
         };
@@ -94,7 +93,6 @@ public class SmokeArrow extends PrepareArrowSkill implements DebuffSkill {
         final int effectDuration = (int) (getEffectDuration(level) * 1000L);
         championsManager.getEffects().addEffect(target, damager, EffectTypes.BLINDNESS, 1, effectDuration);
         championsManager.getEffects().addEffect(target, damager, EffectTypes.SLOWNESS, slownessStrength, effectDuration);
-        championsManager.getEffects().addEffect(target, damager, EffectTypes.CONCUSSED, concussionStrength, effectDuration);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BLAZE_AMBIENT, 2.5F, 2.0F);
 
         new ParticleBuilder(Particle.EXPLOSION_LARGE)
@@ -138,9 +136,8 @@ public class SmokeArrow extends PrepareArrowSkill implements DebuffSkill {
 
     @Override
     public void loadSkillConfig() {
-        baseDuration = getConfig("baseDuration", 3.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
+        baseDuration = getConfig("baseDuration", 4.0, Double.class);
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 2.0, Double.class);
         slownessStrength = getConfig("slownessStrength", 1, Integer.class);
-        concussionStrength = getConfig("concussionStrength", 1, Integer.class);
     }
 }

@@ -59,13 +59,8 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
         return new String[]{
                 "Left click with a Bow to prepare",
                 "",
-                "Your next arrow will mark players for death",
-                "for " + getValueString(this::getDuration, level) + " seconds, causing their next",
-                "instance of damage to be increased by " + getValueString(this::getDamage, level),
-                "and making them glow",
-                "",
-                "If the marked player dies within this duration,",
-                "you will regain <stat>5</stat> health points",
+                "Your next arrow will <effect>Mark</effect> players for death",
+                "for " + getValueString(this::getDuration, level) + " seconds",
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level),
         };
@@ -73,10 +68,6 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
 
     public int getAmplifier(int level){
         return markedStrength + ((level - 1) * markedStrengthIncreasePerLevel);
-    }
-
-    public double getDamage(int level){
-        return (getAmplifier(level) * 2.0);
     }
 
     public double getDuration(int level) {
