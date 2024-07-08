@@ -8,6 +8,7 @@ import me.mykindos.betterpvp.champions.champions.skills.types.ActiveToggleSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.BuffSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.EnergySkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.FireSkill;
+import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.combat.throwables.ThrowableItem;
 import me.mykindos.betterpvp.core.combat.throwables.ThrowableListener;
 import me.mykindos.betterpvp.core.components.champions.Role;
@@ -41,6 +42,7 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
     private double fireTrailDurationIncreasePerLevel;
     private int speedStrength;
     private int strengthLevel;
+    private double immolateWeakness;
 
     @Inject
     public Immolate(Champions champions, ChampionsManager championsManager) {
@@ -60,6 +62,7 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
                 "",
                 "Ignite yourself in flaming fury, gaining",
                 "<effect>Speed " + UtilFormat.getRomanNumeral(speedStrength) + "</effect>, <effect>Strength " + UtilFormat.getRomanNumeral(strengthLevel) + "</effect> and <effect>Fire Resistance",
+                "but taking extra damage",
                 "",
                 "You leave a trail of fire, which",
                 "ignites enemies for " + getValueString(this::getFireTickDuration, level) + " seconds",
@@ -121,6 +124,18 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
         championsManager.getEffects().removeEffect(player, EffectTypes.FIRE_RESISTANCE, getName());
         championsManager.getEffects().removeEffect(player, EffectTypes.STRENGTH, getName());
 
+    }
+
+    @EventHandler
+    public void onDamage(CustomDamageEvent event){
+        if(!(event.getDamagee() instanceof Player player)) return;
+        if (!active.contains(player.getUniqueId())) return;
+
+        int level = getLevel(player);
+        if (level > 0){
+            event.setDamage(event.getDamage() + immolateWeakness);
+            event.addReason("Immolate Weakness");
+        }
     }
 
 
@@ -201,5 +216,6 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
         fireTrailDurationIncreasePerLevel = getConfig("fireTrailDurationIncreasePerLevel", 0.0, Double.class);
         speedStrength = getConfig("speedStrength", 1, Integer.class);
         strengthLevel = getConfig("strengthLevel", 1, Integer.class);
+        immolateWeakness = getConfig("immolateWeakness", 1.5, Double.class);
     }
 }

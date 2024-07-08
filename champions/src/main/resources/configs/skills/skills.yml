@@ -331,7 +331,7 @@ skills:
     inferno:
       enabled: true
       maxlevel: 3
-      cooldown: 4.0
+      cooldown: 3.0
       energy: 25
       energyDecreasePerLevel: 2.0
       baseFireDuration: 2.5
@@ -406,11 +406,12 @@ skills:
       energyDecreasePerLevel: 4.0
       energyStartCost: 10.0
       energyStartCostDecreasePerLevel: 0.0
+      immolateWeakness: 1.5
     lifebonds:
       enabled: true
       maxlevel: 5
       energy: 25
-      baseRadius: 2.0
+      baseRadius: 4.0
       radiusIncreasePerLevel: 1.0
       energyDecreasePerLevel: 1.0
       baseHealCooldown: 2.0
@@ -446,15 +447,13 @@ skills:
       energy: 25
       baseSlowDuration: 2.0
       slowDurationIncreasePerLevel: 0.0
-      slowStrength: 3
+      slowStrength: 1
       slowDuration: 2.0
       energyDecreasePerLevel: 1.0
     glacialblade:
       enabled: true
       maxlevel: 3
-      energy: 20
-      energyDecreasePerLevel: 2.0
-      cooldown: 2.0
+      cooldown: 2.5
       cooldownDecreasePerLevel: 0.5
       damage: 1.5
       damageIncreasePerLevel: 1.0
@@ -464,7 +463,7 @@ skills:
       energy: 28
       baseDamageReduction: 2.0
       damageReductionIncreasePerLevel: 0.5
-      baseEnergyReduction: 3.0
+      baseEnergyReduction: 2.0
       energyReductionDecreasePerLevel: 0.5
       slownessStrength: 3
       damageReduction: 5

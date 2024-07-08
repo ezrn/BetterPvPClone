@@ -243,7 +243,7 @@ public class Inferno extends ChannelSkill implements InteractSkill, CooldownSkil
                 blazePowders.add(fire);
 
                 fire.teleport(shotgun.getPlayer().getEyeLocation());
-                Vector randomVector = new Vector(UtilMath.randDouble(-0.01, 0.01), UtilMath.randDouble(-0.01, 0.01), UtilMath.randDouble(-0.01, 0.1));
+                Vector randomVector = new Vector(UtilMath.randDouble(-0.0, 0.0), UtilMath.randDouble(-0.0, 0.0), UtilMath.randDouble(-0.0, 0.0));
                 Vector increasedVelocity = shotgun.getPlayer().getLocation().getDirection().add(randomVector).multiply(3);
                 fire.setVelocity(increasedVelocity);
                 shotgun.getPlayer().getWorld().playSound(shotgun.getPlayer().getLocation(), Sound.ENTITY_GHAST_SHOOT, 0.1F, 1.0F);

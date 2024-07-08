@@ -11,6 +11,7 @@ import me.mykindos.betterpvp.champions.champions.skills.types.DefensiveSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.EnergySkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.TeamSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.WorldSkill;
+import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
 import me.mykindos.betterpvp.core.effects.EffectTypes;
@@ -28,7 +29,9 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -132,8 +135,6 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
 
             if (friendly) {
                 championsManager.getEffects().addEffect(target, EffectTypes.RESISTANCE, resistanceStrength, 1000);
-            } else {
-                championsManager.getEffects().addEffect(target, player, EffectTypes.SLOWNESS, slownessStrength, 1000);
             }
         }
         return true;
@@ -218,6 +219,17 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
             cancel(player);
         }
 
+    }
+
+    @EventHandler
+    public void onDamage(CustomDamageEvent event){
+        if(!(event.getDamager() instanceof Player player)) return;
+        if (!active.contains(player.getUniqueId())) return;
+
+        int level = getLevel(player);
+        if (level > 0){
+            championsManager.getEffects().addEffect(event.getDamagee(), player, EffectTypes.SLOWNESS, slownessStrength, 1000);
+        }
     }
 
     @Override
