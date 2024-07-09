@@ -302,20 +302,17 @@ skills:
       hitDistance: 4.0
   mage:
     staticlazer:
-      enabled: false
+      enabled: true
       maxlevel: 5
       cooldown: 10.0
-      baseCharge: 40.0
-      chargeIncreasePerLevel: 10.0
-      baseDamage: 2.0
-      damageIncreasePerLevel: 1.0
-      baseRange: 20.0
-      rangeIncreasePerLevel: 10.0
-      energy: 30
-      energyDecreasePerLevel: 2.0
+      baseDamage: 3.0
+      damageIncreasePerLevel: 1.5
+      baseRange: 15.0
       cooldownDecreasePerLevel: 0.5
-      collisionRadius: 1.8
-      explosionRadius: 4.0
+      blocksPerSecond: 30.0
+      headshotDistance: 0.3
+      headshotMultiplier: 2.0
+      rangeIncreasePerLevel: 0.0
     rupture:
       enabled: true
       cooldown: 12.0
@@ -349,15 +346,17 @@ skills:
       cooldown: 23.0
       speed: 0.15
       damage: 6.0
-      fireDurationIncreasePerLevel: 2.0
+      baseFireDuration: 1.0
+      fireDurationIncreasePerLevel: 0.5
       cooldownDecreasePerLevel: 2.0
       baseDamage: 6.0
       damageIncreasePerLevel: 0.0
-      minFireDuration: 4.0
-      radius: 6.0
-      radiusIncreasePerLevel: 0.5
-      baseFireDuration: 2.0
-      minFireDurationIncreasePerLevel: 0.5
+      radius: 5.0
+      radiusIncreasePerLevel: 0.0
+      velocityMultiplier: 2.0
+      yAdd: 0.8
+      yMax: 0.8
+      groundBoost: true
     iceprison:
       enabled: true
       maxlevel: 5
@@ -371,28 +370,23 @@ skills:
     lightningorb:
       enabled: true
       maxlevel: 5
-      cooldown: 23.0
-      maxTargets: 3
+      cooldown: 20.0
       cooldownDecreasePerLevel: 2.0
-      spreadDistanceIncreasePerLevel: 0.5
+      radiusIncreasePerLevel: 0.5
       slowDurationIncreasePerLevel: 0.0
       slowStrength: 2
       shockDurationIncreasePerLevel: 0.0
-      baseDamage: 11.0
+      baseDamage: 8.0
       damageIncreasePerLevel: 0.0
-      spreadDistance: 3.0
+      baseRadius: 3.0
       slowDuration: 4.0
       baseShockDuration: 2.0
-      maxTarget: 3
       shockDuration: 2.0
       velocityStrength: 3.0
-    swarm:
-      enabled: true
-      maxlevel: 5
-      energy: 6
-      batLifespan: 2.0
-      batDamage: 1.0
-      energyDecreasePerLevel: 1.0
+      baseSilenceDuration: 3.0
+      silenceDurationIncreasePerLevel: 0.0
+      delay: 5.0
+      delayDecreasePerLevel: 0.5
     immolate:
       enabled: true
       maxlevel: 3
@@ -406,27 +400,11 @@ skills:
       energyDecreasePerLevel: 4.0
       energyStartCost: 10.0
       energyStartCostDecreasePerLevel: 0.0
-      immolateWeakness: 1.5
-    lifebonds:
-      enabled: true
-      maxlevel: 5
-      energy: 25
-      baseRadius: 4.0
-      radiusIncreasePerLevel: 1.0
-      energyDecreasePerLevel: 1.0
-      baseHealCooldown: 2.0
-      healCooldownDecreasePerLevel: 0.0
-      baseHealSpeed: 0.3
-      healSpeedIncreasePerLevel: 0.0
-      baseHealMultiplier: 0.25
-      healMultiplierIncreasePerLevel: 0.0
-      energyStartCost: 10.0
-      energyStartCostDecreasePerLevel: 0.0
     magmablade:
       enabled: true
       maxlevel: 3
-      baseDamage: 1.0
-      damageIncreasePerLevel: 1.0
+      baseDamage: 1.5
+      damageIncreasePerLevel: 1.5
     moltenshield:
       enabled: true
       maxlevel: 1
@@ -480,10 +458,10 @@ skills:
       fissureDistance: 14
       fissureDistanceIncreasePerLevel: 0
       fissureExpireDuration: 10.0
-      baseExtraDamagePerBlock: 0.4
-      baseExtraDamagePerBlockIncreasePerLevel: 0.2
+      baseExtraDamagePerBlock: 2.0
+      baseExtraDamagePerBlockIncreasePerLevel: 0.0
       effectDuration: 1.0
-      slownessLevel: 2
+      slownessLevel: 5
       effectDurationIncreasePerLevel: 1.0
       gateCheckEnabled: true
       doorCheckEnabled: true
@@ -880,6 +858,13 @@ skills:
       numAttacksToReducePerLevel: 0
       range: 8
       duration: 60.0
+    swarm:
+      enabled: true
+      maxlevel: 5
+      energy: 6
+      batLifespan: 2.0
+      batDamage: 1.0
+      energyDecreasePerLevel: 1.0
     bloodshed:
       enabled: true
       maxlevel: 5
@@ -892,6 +877,21 @@ skills:
       speedStrength: 2
       baseHealthReduction: 0.4
       healthReductionDecreasePerLevel: 0.05
+    lifebonds:
+      enabled: true
+      maxlevel: 5
+      energy: 25
+      baseRadius: 4.0
+      radiusIncreasePerLevel: 1.0
+      energyDecreasePerLevel: 1.0
+      baseHealCooldown: 2.0
+      healCooldownDecreasePerLevel: 0.0
+      baseHealSpeed: 0.3
+      healSpeedIncreasePerLevel: 0.0
+      baseHealMultiplier: 0.25
+      healMultiplierIncreasePerLevel: 0.0
+      energyStartCost: 10.0
+      energyStartCostDecreasePerLevel: 0.0
     bloodthirst:
       enabled: true
       maxlevel: 3

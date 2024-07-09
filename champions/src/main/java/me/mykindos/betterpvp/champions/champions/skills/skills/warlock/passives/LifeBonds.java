@@ -1,4 +1,4 @@
-package me.mykindos.betterpvp.champions.champions.skills.skills.mage.passives;
+package me.mykindos.betterpvp.champions.champions.skills.skills.warlock.passives;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -207,7 +207,7 @@ public class LifeBonds extends ActiveToggleSkill implements EnergySkill, HealthS
 
     @Override
     public Role getClassType() {
-        return Role.MAGE;
+        return Role.WARLOCK;
     }
 
     @Override

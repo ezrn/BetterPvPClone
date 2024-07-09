@@ -126,19 +126,6 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
 
     }
 
-    @EventHandler
-    public void onDamage(CustomDamageEvent event){
-        if(!(event.getDamagee() instanceof Player player)) return;
-        if (!active.contains(player.getUniqueId())) return;
-
-        int level = getLevel(player);
-        if (level > 0){
-            event.setDamage(event.getDamage() + immolateWeakness);
-            event.addReason("Immolate Weakness");
-        }
-    }
-
-
     private void audio(Player player) {
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_LAVA_EXTINGUISH, 0.3F, 0.0F);
     }
@@ -216,6 +203,5 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
         fireTrailDurationIncreasePerLevel = getConfig("fireTrailDurationIncreasePerLevel", 0.0, Double.class);
         speedStrength = getConfig("speedStrength", 1, Integer.class);
         strengthLevel = getConfig("strengthLevel", 1, Integer.class);
-        immolateWeakness = getConfig("immolateWeakness", 1.5, Double.class);
     }
 }

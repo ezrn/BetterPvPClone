@@ -148,6 +148,8 @@ public class Fissure extends Skill implements InteractSkill, CooldownSkill, List
                 for (LivingEntity entity : fissureBlock.getNearbyEntities()) {
                     if (entity.getLocation().getBlockY() == block.getY() + 1 || entity.getLocation().getBlock().equals(block)) {
                         championsManager.getEffects().addEffect(entity, player, EffectTypes.SLOWNESS,slownessLevel, (long) (getSlowDuration(level) * 1000));
+                        championsManager.getEffects().addEffect(entity, player, EffectTypes.NO_JUMP, (long) (getSlowDuration(level) * 1000));
+
                     }
                 }
             }
@@ -227,11 +229,11 @@ public class Fissure extends Skill implements InteractSkill, CooldownSkill, List
         fissureDistance = getConfig("fissureDistance", 14, Integer.class);
         fissureDistanceIncreasePerLevel = getConfig("fissureDistanceIncreasePerLevel", 0, Integer.class);
         fissureExpireDuration = getConfig("fissureExpireDuration", 10.0, Double.class);
-        damagePerBlock = getConfig("baseExtraDamagePerBlock", 0.6, Double.class);
-        damagePerBlockIncreasePerLevel = getConfig("baseExtraDamagePerBlockIncreasePerLevel", 0.2, Double.class);
+        damagePerBlock = getConfig("baseExtraDamagePerBlock", 2.0, Double.class);
+        damagePerBlockIncreasePerLevel = getConfig("baseExtraDamagePerBlockIncreasePerLevel", 0.0, Double.class);
         effectDuration = getConfig("effectDuration", 1.0, Double.class);
         effectDurationIncreasePerLevel = getConfig("effectDurationIncreasePerLevel", 1.0, Double.class);
-        slownessLevel = getConfig("slownessLevel", 2, Integer.class);
+        slownessLevel = getConfig("slownessLevel", 5, Integer.class);
 
         var forbidden = List.of("TNT", "ENCHANTING_TABLE");
         forbiddenBlockTypes = getConfig("fissureForbiddenBlocks", forbidden, List.class);

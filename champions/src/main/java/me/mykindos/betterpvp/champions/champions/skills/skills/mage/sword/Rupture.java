@@ -1,4 +1,4 @@
-package me.mykindos.betterpvp.champions.champions.skills.skills.mage.axe;
+package me.mykindos.betterpvp.champions.champions.skills.skills.mage.sword;
 
 import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
@@ -77,7 +77,7 @@ public class Rupture extends Skill implements Listener, InteractSkill, CooldownS
     public String[] getDescription(int level) {
 
         return new String[]{
-                "Right click with an Axe to activate",
+                "Right click with a Sword to activate",
                 "",
                 "Rupture the earth in the direction",
                 "you are facing, dealing " + getValueString(this::getDamage, level) + " damage,",
@@ -103,7 +103,7 @@ public class Rupture extends Skill implements Listener, InteractSkill, CooldownS
 
     @Override
     public SkillType getType() {
-        return SkillType.AXE;
+        return SkillType.SWORD;
     }
 
 

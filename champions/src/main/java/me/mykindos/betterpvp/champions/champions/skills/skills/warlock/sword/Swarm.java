@@ -1,4 +1,4 @@
-package me.mykindos.betterpvp.champions.champions.skills.skills.mage.sword;
+package me.mykindos.betterpvp.champions.champions.skills.skills.warlock.sword;
 
 
 import com.google.inject.Inject;
@@ -79,7 +79,7 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
 
     @Override
     public Role getClassType() {
-        return Role.MAGE;
+        return Role.WARLOCK;
     }
 
     @Override
