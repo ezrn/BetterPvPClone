@@ -50,6 +50,8 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
     private double durationIncreasePerLevel;
     private int resistanceStrength;
     private int slownessStrength;
+    private double slowDuration;
+    private double slowDurationIncreasePerLevel;
 
     @Inject
     public ArcticArmour(Champions champions, ChampionsManager championsManager, WorldBlockHandler blockHandler) {
@@ -71,7 +73,8 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
                 "you in a " + getValueString(this::getRadius, level) + " Block radius",
                 "",
                 "Allies inside this area receive <effect>Resistance " + UtilFormat.getRomanNumeral(resistanceStrength) + "</effect>, and",
-                "enemies inside this area receive <effect>Slowness " + UtilFormat.getRomanNumeral(slownessStrength) + "</effect>",
+                "enemies hit by you receive <effect>Slowness " + UtilFormat.getRomanNumeral(slownessStrength) + "</effect> for",
+                getValueString(this::getSlowDuration, level) + " seconds",
                 "",
                 "Uses " + getValueString(this::getEnergyStartCost, level) + " energy on activation",
                 "Energy / Second: " + getValueString(this::getEnergy, level),
@@ -86,6 +89,9 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
 
     public double getDuration(int level) {
         return baseDuration + ((level - 1) * durationIncreasePerLevel);
+    }
+    public double getSlowDuration(int level) {
+        return slowDuration + ((level-1) * slowDurationIncreasePerLevel);
     }
 
     @Override
@@ -241,6 +247,8 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
 
         resistanceStrength = getConfig("resistanceStrength", 1, Integer.class);
         slownessStrength = getConfig("slownessStrength", 1, Integer.class);
+        slowDuration = getConfig("slowDuration", 1.0, Double.class);
+        slowDurationIncreasePerLevel = getConfig("slowDurationIncreasePerLevel", 1.0, Double.class);
     }
 
 

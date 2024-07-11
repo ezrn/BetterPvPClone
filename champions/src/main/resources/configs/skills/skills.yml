@@ -305,14 +305,18 @@ skills:
       enabled: true
       maxlevel: 5
       cooldown: 10.0
+      baseCharge: 80.0
+      chargeIncreasePerLevel: 20.0
       baseDamage: 3.0
       damageIncreasePerLevel: 1.5
-      baseRange: 15.0
+      baseRange: 25.0
       cooldownDecreasePerLevel: 0.5
-      blocksPerSecond: 30.0
+      blocksPerSecond: 60.0
       headshotDistance: 0.3
       headshotMultiplier: 2.0
       rangeIncreasePerLevel: 0.0
+      hitboxSize: 0.5
+      offsetMultiplier: 0.5
     rupture:
       enabled: true
       cooldown: 12.0
@@ -349,14 +353,15 @@ skills:
       baseFireDuration: 1.0
       fireDurationIncreasePerLevel: 0.5
       cooldownDecreasePerLevel: 2.0
-      baseDamage: 6.0
-      damageIncreasePerLevel: 0.0
+      baseDamage: 4.0
+      damageIncreasePerLevel: 1.0
       radius: 5.0
       radiusIncreasePerLevel: 0.0
       velocityMultiplier: 2.0
       yAdd: 0.8
       yMax: 0.8
       groundBoost: true
+      fallDamageLimit: 8.0
     iceprison:
       enabled: true
       maxlevel: 5
@@ -372,7 +377,7 @@ skills:
       maxlevel: 5
       cooldown: 20.0
       cooldownDecreasePerLevel: 2.0
-      radiusIncreasePerLevel: 0.5
+      radiusIncreasePerLevel: 1.0
       slowDurationIncreasePerLevel: 0.0
       slowStrength: 2
       shockDurationIncreasePerLevel: 0.0
@@ -422,12 +427,12 @@ skills:
     blizzard:
       enabled: true
       maxlevel: 5
-      energy: 25
+      energy: 80
       baseSlowDuration: 2.0
       slowDurationIncreasePerLevel: 0.0
       slowStrength: 1
       slowDuration: 2.0
-      energyDecreasePerLevel: 1.0
+      energyDecreasePerLevel: 10.0
     glacialblade:
       enabled: true
       maxlevel: 3
@@ -472,13 +477,13 @@ skills:
     nullblade:
       enabled: true
       maxlevel: 5
-      energy: 7
-      energyDecreasePerLevel: 2.0
+      energySiphoned: 5
+      energySiphonedIncreasePerLevel: 5.0
     holylight:
       enabled: true
       maxlevel: 3
-      baseRadius: 8.0
-      radiusIncreasePerLevel: 1.0
+      baseRadius: 5.0
+      radiusIncreasePerLevel: 5.0
       baseDuration: 7.0
       durationIncreasePerLevel: 0.0
       regenerationStrength: 1
@@ -504,6 +509,8 @@ skills:
       energyDecreasePerLevel: 4.0
       energyStartCost: 10.0
       energyStartCostDecreasePerLevel: 0.0
+      slowDuration: 1.0
+      slowDurationIncreasePerLevel: 1.0
     pestilence:
       enabled: true
       maxlevel: 3
@@ -861,10 +868,10 @@ skills:
     swarm:
       enabled: true
       maxlevel: 5
-      energy: 6
-      batLifespan: 2.0
+      batLifespan: 5.0
       batDamage: 1.0
-      energyDecreasePerLevel: 1.0
+      cooldown: 15.0
+      cooldownDecreasePerLeve: 1.0
     bloodshed:
       enabled: true
       maxlevel: 5

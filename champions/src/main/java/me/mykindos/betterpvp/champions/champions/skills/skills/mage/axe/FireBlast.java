@@ -17,9 +17,11 @@ import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.combat.events.VelocityType;
 import me.mykindos.betterpvp.core.components.champions.Role;
 import me.mykindos.betterpvp.core.components.champions.SkillType;
+import me.mykindos.betterpvp.core.effects.EffectTypes;
 import me.mykindos.betterpvp.core.framework.customtypes.KeyValue;
 import me.mykindos.betterpvp.core.framework.updater.UpdateEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
+import me.mykindos.betterpvp.core.utilities.UtilBlock;
 import me.mykindos.betterpvp.core.utilities.UtilDamage;
 import me.mykindos.betterpvp.core.utilities.UtilEntity;
 import me.mykindos.betterpvp.core.utilities.UtilServer;
@@ -63,6 +65,7 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
     private double yAdd;
     private double yMax;
     private boolean groundBoost;
+    private double fallDamageLimit;
 
 
     @Inject
@@ -82,9 +85,9 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
                 "Right click with an Axe to activate",
                 "",
                 "Launch a fireball which explodes on impact,",
-                "knocking back any players within <val>" + getRadius(level) + "</val> blocks",
-                "dealing x damage, and igniting them for ",
-                "<val>" + getFireDuration(level) + "</val> seconds",
+                "knocking back any players within " + getValueString(this::getRadius, level) + " blocks",
+                "dealing " + getValueString(this::getDamage, level) + " damage, and igniting them for ",
+                getValueString(this::getFireDuration, level) + " seconds",
                 "",
                 "Cooldown: <val>" + getCooldown(level)
         };
@@ -183,23 +186,24 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
         for (KeyValue<LivingEntity, EntityProperty> entry : nearby) {
             EntityProperty property = entry.getValue();
             final LivingEntity target = entry.get();
-            double distance = target.getLocation().distance(fireballLocation);
-            double mult = (1 - (distance / getRadius(level)));
-            double multiplier = Math.max(0, Math.min(1, mult));
-            System.out.println("multiplier: " + multiplier);
-            System.out.println("distance: " + distance);
 
             Vector fireballVector = fireballLocation.toVector();
             Vector adjustedFireballVector = fireballVector.clone().add(new Vector(0, -2, 0));
             Vector direction = target.getLocation().toVector().subtract(adjustedFireballVector).normalize();
 
-            VelocityData velocityData = new VelocityData(direction, (velocityMultiplier * multiplier), false, 0.0D, (yAdd * multiplier), (yMax * multiplier), groundBoost);
+            VelocityData velocityData = new VelocityData(direction, velocityMultiplier, false, 0.0D, yAdd , yMax , groundBoost);
             UtilVelocity.velocity(target, shooter, velocityData, VelocityType.CUSTOM);
 
             double fireDuration = getFireDuration(level);
             if (property == EntityProperty.ENEMY) {
-                UtilDamage.doCustomDamage(new CustomDamageEvent(target, shooter, null, EntityDamageEvent.DamageCause.CUSTOM, (getDamage(level) * multiplier), false, "Fire Blast"));
-                UtilServer.runTaskLater(champions, () -> target.setFireTicks((int) (multiplier * (20 * fireDuration))), 2);
+                UtilDamage.doCustomDamage(new CustomDamageEvent(target, shooter, null, EntityDamageEvent.DamageCause.CUSTOM, getDamage(level), false, "Fire Blast"));
+                UtilServer.runTaskLater(champions, () -> target.setFireTicks((int) (20 * fireDuration)), 2);
+            }
+            if(property == EntityProperty.FRIENDLY || target.equals(shooter)) {
+                UtilServer.runTaskLater(champions, () -> {
+                    championsManager.getEffects().addEffect(target, shooter, EffectTypes.NO_FALL,getName(), (int) fallDamageLimit,
+                            50L, true, true, UtilBlock::isGrounded);
+                }, 3L);
             }
         }
     }
@@ -237,16 +241,19 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
         fireball.setIsIncendiary(false);
 
         fireballs.add(fireball);
+        fireball.getWorld().playSound(fireball.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.0f, 1.5f);
+
     }
 
     @Override
     public void loadSkillConfig() {
-        speed = getConfig("speed", 0.15, Double.class);
+        fallDamageLimit = getConfig("fallDamageLimit", 6.0, Double.class);
+        speed = getConfig("speed", 0.2, Double.class);
         baseDamage = getConfig("baseDamage", 4.0, Double.class);
         damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 1.0, Double.class);
-        baseFireDuration = getConfig("baseFireDuration", 1.0, Double.class);
+        baseFireDuration = getConfig("baseFireDuration", 0.5, Double.class);
         fireDurationIncreasePerLevel = getConfig("fireDurationIncreasePerLevel", 1.0, Double.class);
-        radius = getConfig("radius", 5.0, Double.class);
+        radius = getConfig("radius", 4.0, Double.class);
         radiusIncreasePerLevel = getConfig("radiusIncreasePerLevel", 0.0, Double.class);
         velocityMultiplier = getConfig("velocityMultiplier", 2.5, Double.class);
         yAdd = getConfig("yAdd", 0.8, Double.class);

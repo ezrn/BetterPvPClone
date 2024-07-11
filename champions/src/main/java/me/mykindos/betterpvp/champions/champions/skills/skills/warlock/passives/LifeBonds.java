@@ -1,5 +1,6 @@
 package me.mykindos.betterpvp.champions.champions.skills.skills.warlock.passives;
 
+import com.destroystokyo.paper.ParticleBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import me.mykindos.betterpvp.champions.Champions;
@@ -16,6 +17,7 @@ import me.mykindos.betterpvp.core.listener.BPvPListener;
 import me.mykindos.betterpvp.core.utilities.UtilMessage;
 import me.mykindos.betterpvp.core.utilities.UtilPlayer;
 import me.mykindos.betterpvp.core.utilities.events.EntityProperty;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -126,11 +128,26 @@ public class LifeBonds extends ActiveToggleSkill implements EnergySkill, HealthS
     }
 
     public void createParticlesForPlayers(Player caster, List<KeyValue<Player, EntityProperty>> nearbyPlayerKeyValues) {
-        caster.getWorld().spawnParticle(Particle.CHERRY_LEAVES, caster.getLocation().add(0, 1.0, 0), 1, 0.1, 0.1, 0.1, 0);
+        Particle.DustOptions redDust = new Particle.DustOptions(Color.fromRGB(255, 0, 0), 1);
+        new ParticleBuilder(Particle.REDSTONE)
+                .location(caster.getLocation().add(0, 1.0, 0))
+                .count(1)
+                .offset(0.1, 0.1, 0.1)
+                .extra(0)
+                .data(redDust)
+                .receivers(60)
+                .spawn();
 
         for (KeyValue<Player, EntityProperty> keyValue : nearbyPlayerKeyValues) {
             Player player = keyValue.getKey();
-            player.getWorld().spawnParticle(Particle.CHERRY_LEAVES, player.getLocation().add(0, 1.0, 0), 1, 0.1, 0.1, 0.1, 0);
+            new ParticleBuilder(Particle.REDSTONE)
+                    .location(player.getLocation().add(0, 1.0, 0))
+                    .count(1)
+                    .offset(0.1, 0.1, 0.1)
+                    .extra(0)
+                    .data(redDust)
+                    .receivers(60)
+                    .spawn();
         }
     }
 
@@ -189,7 +206,15 @@ public class LifeBonds extends ActiveToggleSkill implements EnergySkill, HealthS
                 Vector direction = target.getLocation().add(0, 1.5, 0).subtract(currentLocation).toVector().normalize().multiply(getHealSpeed(level));
                 currentLocation.add(direction);
 
-                source.getWorld().spawnParticle(Particle.CHERRY_LEAVES, currentLocation, 1, 0.1, 0.1, 0.1, 0);
+                Particle.DustOptions redDust = new Particle.DustOptions(Color.fromRGB(255, 0, 0), 1);
+                new ParticleBuilder(Particle.REDSTONE)
+                        .location(currentLocation)
+                        .count(1)
+                        .offset(0.1, 0.1, 0.1)
+                        .extra(0)
+                        .data(redDust)
+                        .receivers(60)
+                        .spawn();
 
                 if (currentLocation.distance(target.getLocation().add(0, 1.5, 0)) <= getHealSpeed(level)) {
                     double healthToAdd = healthStored.remove(target.getUniqueId());

@@ -1,5 +1,4 @@
-package me.mykindos.betterpvp.champions.champions.skills.skills.warlock.sword;
-
+package me.mykindos.betterpvp.champions.champions.skills.skills.warlock.axe;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -8,6 +7,7 @@ import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.champions.champions.ChampionsManager;
 import me.mykindos.betterpvp.champions.champions.skills.data.SkillActions;
 import me.mykindos.betterpvp.champions.champions.skills.types.ChannelSkill;
+import me.mykindos.betterpvp.champions.champions.skills.types.CooldownSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.EnergyChannelSkill;
 import me.mykindos.betterpvp.champions.champions.skills.types.InteractSkill;
 import me.mykindos.betterpvp.core.client.gamer.Gamer;
@@ -44,14 +44,14 @@ import java.util.WeakHashMap;
 
 @Singleton
 @BPvPListener
-public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelSkill, Listener {
+public class Swarm extends ChannelSkill implements CooldownSkill, InteractSkill, Listener {
 
-    private final WeakHashMap<Player, Long> batCD = new WeakHashMap<>();
     private final WeakHashMap<Player, ArrayList<BatData>> batData = new WeakHashMap<>();
+    private final WeakHashMap<Player, Boolean> leadsAttached = new WeakHashMap<>();
 
     private double batLifespan;
-
     private double batDamage;
+    private int numberOfBats;
 
     @Inject
     public Swarm(Champions champions, ChampionsManager championsManager) {
@@ -65,15 +65,12 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
 
     @Override
     public String[] getDescription(int level) {
-
         return new String[]{
-                "Hold right click with a Sword to channel",
+                "Hold right click with an Axe to activate",
                 "",
                 "Release a swarm of bats which",
                 "damage and knock back any enemies",
                 "they come in contact with",
-                "",
-                "Energy: <val>" + getEnergy(level)
         };
     }
 
@@ -84,14 +81,8 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
 
     @Override
     public SkillType getType() {
-        return SkillType.SWORD;
+        return SkillType.AXE;
     }
-
-    @Override
-    public float getEnergy(int level) {
-        return (float) (energy - ((level - 1) * energyDecreasePerLevel));
-    }
-
 
     public boolean hitPlayer(Location loc, LivingEntity player) {
         if (loc.add(0, -loc.getY(), 0).toVector().subtract(player.getLocation()
@@ -105,44 +96,19 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
         return false;
     }
 
-
-    @UpdateEvent
-    public void checkChannelling() {
-
-        final Iterator<UUID> iterator = active.iterator();
-        while (iterator.hasNext()) {
-            Player cur = Bukkit.getPlayer(iterator.next());
-            if (cur == null) {
-                iterator.remove();
-                continue;
-            }
-
-            Gamer gamer = championsManager.getClientManager().search().online(cur).getGamer();
-            if (!gamer.isHoldingRightClick()) {
-                iterator.remove();
-                continue;
-            }
-
-            int level = getLevel(cur);
-            if (level <= 0) {
-                iterator.remove();
-            } else if (!championsManager.getEnergy().use(cur, getName(), getEnergy(level) / 2, true)) {
-                iterator.remove();
-            } else if (!isHolding(cur)) {
-                iterator.remove();
-            } else {
-                if (batData.containsKey(cur)) {
-
-                    Bat bat = cur.getWorld().spawn(cur.getLocation().add(0, 0.5, 0), Bat.class);
-                    bat.setHealth(1);
-                    bat.setMetadata("PlayerSpawned", new FixedMetadataValue(champions, true));
-                    bat.setVelocity(cur.getLocation().getDirection().multiply(2));
-                    batData.get(cur).add(new BatData(bat, System.currentTimeMillis(), cur.getLocation()));
-
-                }
-            }
+    @Override
+    public boolean canUse(Player player) {
+        int level = getLevel(player);
+        if ((batData.containsKey(player)) && !batData.get(player).isEmpty()){
+            activate(player, level);
+            return false;
         }
+        return true;
+    }
 
+    @Override
+    public double getCooldown(int level) {
+        return cooldown - ((level - 1) * cooldownDecreasePerLevel);
     }
 
     @UpdateEvent(delay = 100)
@@ -160,10 +126,6 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
                     if (!hitPlayer(bat.getLocation(), other)) continue;
 
                     if (other instanceof Player) {
-                        if (batCD.containsKey(other)) {
-                            if (!UtilTime.elapsed(batCD.get(other), 500)) continue;
-                        }
-                        batCD.put((Player) other, System.currentTimeMillis());
                         championsManager.getEffects().addEffect(other, EffectTypes.SHOCK, 800L);
                     }
 
@@ -190,10 +152,24 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
         }
     }
 
+    @UpdateEvent
+    public void applyBatPull() {
+        for (Player player : leadsAttached.keySet()) {
+            if (leadsAttached.get(player)) {
+                ArrayList<BatData> bats = batData.get(player);
+                if (bats != null && !bats.isEmpty()) {
+                    for (BatData batData : bats) {
+                        Bat bat = batData.getBat();
+                        Vector direction = bat.getLocation().toVector().subtract(player.getLocation().toVector()).normalize();
+                        player.setVelocity(direction.multiply(0.35));
+                    }
+                }
+            }
+        }
+    }
 
     @UpdateEvent(delay = 500)
     public void destroyBats() {
-
         Iterator<Entry<Player, ArrayList<BatData>>> iterator = batData.entrySet().iterator();
         while (iterator.hasNext()) {
             Entry<Player, ArrayList<BatData>> data = iterator.next();
@@ -209,7 +185,6 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
                 if (UtilTime.elapsed(bat.getTimer(), (long) batLifespan * 1000)) {
                     bat.getBat().remove();
                     batIt.remove();
-
                 }
             }
 
@@ -221,16 +196,41 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
 
     @Override
     public void activate(Player player, int level) {
-        active.add(player.getUniqueId());
-        if (!batData.containsKey(player)) {
-            batData.put(player, new ArrayList<>());
+        if (leadsAttached.containsKey(player) && leadsAttached.get(player)) {
+            // Detach leads and stop applying velocity
+            leadsAttached.put(player, false);
+            for (BatData batData : batData.get(player)) {
+                Bat bat = batData.getBat();
+                bat.setLeashHolder(null);
+            }
+        } else if (batData.containsKey(player) && !batData.get(player).isEmpty()) {
+            // Second activation: attach leads and apply velocity
+            leadsAttached.put(player, true);
+            for (BatData batData : batData.get(player)) {
+                Bat bat = batData.getBat();
+                bat.setLeashHolder(player);
+            }
+        } else {
+            // First activation: spawn bats without leads
+            leadsAttached.put(player, false);
+            ArrayList<BatData> bats = new ArrayList<>();
+            for (int i = 0; i < numberOfBats; i++) {
+                Bat bat = player.getWorld().spawn(player.getLocation().add(0, 0.5, 0), Bat.class);
+                bat.setHealth(1);
+                bat.setMetadata("PlayerSpawned", new FixedMetadataValue(champions, true));
+                bat.setVelocity(player.getLocation().getDirection().multiply(2));
+                bats.add(new BatData(bat, System.currentTimeMillis(), player.getLocation()));
+            }
+            batData.put(player, bats);
+            active.add(player.getUniqueId());
         }
     }
 
     @Override
     public void loadSkillConfig() {
-        batLifespan = getConfig("batLifespan", 2.0, Double.class);
+        batLifespan = getConfig("batLifespan", 5.0, Double.class);
         batDamage = getConfig("batDamage", 1.0, Double.class);
+        numberOfBats = getConfig("numberOfBats", 10, Integer.class); // default number of bats to spawn in a wave
     }
 
     @Override
@@ -240,11 +240,8 @@ public class Swarm extends ChannelSkill implements InteractSkill, EnergyChannelS
 
     @Data
     private static class BatData {
-
         private final Bat bat;
         private final long timer;
         private final Location loc;
-
     }
-
 }

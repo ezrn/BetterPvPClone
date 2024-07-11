@@ -173,7 +173,7 @@ public class LightningOrb extends Skill implements InteractSkill, CooldownSkill,
     @Override
     public void loadSkillConfig() {
         baseRadius = getConfig("radiusDistance", 3.0, Double.class);
-        radiusIncreasePerLevel = getConfig("radiusIncreasePerLevel", 0.5, Double.class);
+        radiusIncreasePerLevel = getConfig("radiusIncreasePerLevel", 1.0, Double.class);
 
         baseSlowDuration = getConfig("slowDuration", 4.0, Double.class);
         slowDurationIncreasePerLevel = getConfig("slowDurationIncreasePerLevel", 0.0, Double.class);
