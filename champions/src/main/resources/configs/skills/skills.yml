@@ -311,7 +311,7 @@ skills:
       damageIncreasePerLevel: 1.5
       baseRange: 25.0
       cooldownDecreasePerLevel: 0.5
-      blocksPerSecond: 60.0
+      blocksPerSecond: 100.0
       headshotDistance: 0.3
       headshotMultiplier: 2.0
       rangeIncreasePerLevel: 0.0
@@ -868,10 +868,13 @@ skills:
     swarm:
       enabled: true
       maxlevel: 5
-      batLifespan: 5.0
-      batDamage: 1.0
+      batLifespan: 2.0
+      batLifespanIncreasePerLevel: 1.0
+      batDamage: 3.0
       cooldown: 15.0
       cooldownDecreasePerLeve: 1.0
+      pullSpeed: 0.5
+      batSpeed: 0.6
     bloodshed:
       enabled: true
       maxlevel: 5

@@ -162,7 +162,7 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
 
         hitEntitiesMap.remove(player);
 
-        final float range = getRange(level);
+        final float range = (getRange(level) * charge);
         final Vector direction = player.getEyeLocation().getDirection();
         final Location start = player.getEyeLocation().add(direction);
 
@@ -327,7 +327,7 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
         damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 1.5, Double.class);
         baseRange = getConfig("baseRange", 25.0, Double.class);
         rangeIncreasePerLevel = getConfig("rangeIncreasePerLevel", 0.0, Double.class);
-        blocksPerSecond = getConfig("blocksPerSecond", 60.0, Double.class);
+        blocksPerSecond = getConfig("blocksPerSecond", 100.0, Double.class);
         headshotDistance = getConfig("headshotDistance", 0.3, Double.class);
         headshotMultiplier = getConfig("headshotMultiplier", 2.0, Double.class);
         hitboxSize = getConfig("hitboxSize", 0.5, Double.class);

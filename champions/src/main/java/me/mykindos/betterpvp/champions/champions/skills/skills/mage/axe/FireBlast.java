@@ -133,18 +133,6 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
         }
     }
 
-    // If damaged by entity do nothing
-    @EventHandler
-    public void onDeflect(EntityDamageByEntityEvent event) {
-        if (event.getEntity() instanceof LargeFireball fireball) {
-            if (fireball.getShooter() instanceof Player){
-                if (event.getDamager() instanceof Player || event.getDamager() instanceof Projectile) {
-                    event.setCancelled(true);
-                }
-            }
-        }
-    }
-
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntity() instanceof LargeFireball largeFireball) {
@@ -195,7 +183,7 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
             UtilVelocity.velocity(target, shooter, velocityData, VelocityType.CUSTOM);
 
             double fireDuration = getFireDuration(level);
-            if (property == EntityProperty.ENEMY) {
+            if (property != EntityProperty.FRIENDLY) {
                 UtilDamage.doCustomDamage(new CustomDamageEvent(target, shooter, null, EntityDamageEvent.DamageCause.CUSTOM, getDamage(level), false, "Fire Blast"));
                 UtilServer.runTaskLater(champions, () -> target.setFireTicks((int) (20 * fireDuration)), 2);
             }
@@ -255,9 +243,9 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
         fireDurationIncreasePerLevel = getConfig("fireDurationIncreasePerLevel", 1.0, Double.class);
         radius = getConfig("radius", 4.0, Double.class);
         radiusIncreasePerLevel = getConfig("radiusIncreasePerLevel", 0.0, Double.class);
-        velocityMultiplier = getConfig("velocityMultiplier", 2.5, Double.class);
-        yAdd = getConfig("yAdd", 0.8, Double.class);
-        yMax = getConfig("yMax", 0.8, Double.class);
+        velocityMultiplier = getConfig("velocityMultiplier", 3.0, Double.class);
+        yAdd = getConfig("yAdd", 1.0, Double.class);
+        yMax = getConfig("yMax", 1.2, Double.class);
         groundBoost = getConfig("groundBoost", true, Boolean.class);
 
     }
