@@ -321,11 +321,10 @@ skills:
       enabled: true
       cooldown: 12.0
       maxlevel: 5
-      damage: 8.0
       slowDuration: 1.5
       cooldownDecreasePerLevel: 1.0
-      baseDamage: 8.0
-      damageIncreasePerLevel: 0.0
+      baseDamage: 6.0
+      damageIncreasePerLevel: 1.0
       baseSlowDuration: 1.5
       slowDurationIncreasePerLevel: 0.0
       slowStrength: 3
@@ -365,12 +364,12 @@ skills:
     iceprison:
       enabled: true
       maxlevel: 5
-      cooldown: 25.0
+      cooldown: 20.0
       sphereSize: 4
       speed: 1.5
       cooldownDecreasePerLevel: 2.0
-      baseDuration: 6.0
-      durationIncreasePerLevel: 0.5
+      baseDuration: 4.0
+      durationIncreasePerLevel: 1.0
       variance: 0.5
     lightningorb:
       enabled: true
@@ -463,11 +462,11 @@ skills:
       fissureDistance: 14
       fissureDistanceIncreasePerLevel: 0
       fissureExpireDuration: 10.0
-      baseExtraDamagePerBlock: 2.0
-      baseExtraDamagePerBlockIncreasePerLevel: 0.0
-      effectDuration: 1.0
+      baseExtraDamagePerBlock: 0.8
+      baseExtraDamagePerBlockIncreasePerLevel: 0.2
+      effectDuration: 2.5
       slownessLevel: 5
-      effectDurationIncreasePerLevel: 1.0
+      effectDurationIncreasePerLevel: 0.5
       gateCheckEnabled: true
       doorCheckEnabled: true
       fissureForbiddenBlocks:
@@ -518,6 +517,7 @@ skills:
       cooldownDecreasePerLevel: 3.0
       enemyDamageReduction: 0.2
       radius: 5.0
+      radiusIncreasePerLevel: 2.0
       infectionDuration: 5.0
       duration: 5.0
     rootingaxe:
@@ -868,13 +868,15 @@ skills:
     swarm:
       enabled: true
       maxlevel: 5
-      batLifespan: 2.0
-      batLifespanIncreasePerLevel: 1.0
+      batLifespan: 3.0
+      batLifespanIncreasePerLevel: 0.5
       batDamage: 3.0
       cooldown: 15.0
       cooldownDecreasePerLeve: 1.0
       pullSpeed: 0.5
       batSpeed: 0.6
+      numberOfBats: 10
+      numberOfBatsIncreasePerLevel: 5
     bloodshed:
       enabled: true
       maxlevel: 5

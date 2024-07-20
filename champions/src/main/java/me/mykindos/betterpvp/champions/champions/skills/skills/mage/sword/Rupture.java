@@ -52,15 +52,10 @@ public class Rupture extends Skill implements Listener, InteractSkill, CooldownS
 
     private final WeakHashMap<Player, ArrayList<LivingEntity>> cooldownJump = new WeakHashMap<>();
     private final WeakHashMap<ArmorStand, Long> stands = new WeakHashMap<>();
-
     private double baseDamage;
-
     private double damageIncreasePerLevel;
-
     private double baseSlowDuration;
-
     private double slowDurationIncreasePerLevel;
-
     private int slowStrength;
 
     @Inject
@@ -222,8 +217,8 @@ public class Rupture extends Skill implements Listener, InteractSkill, CooldownS
     }
 
     public void loadSkillConfig() {
-        baseDamage = getConfig("baseDamage", 8.0, Double.class);
-        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 0.0, Double.class);
+        baseDamage = getConfig("baseDamage", 6.0, Double.class);
+        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 1.0, Double.class);
         baseSlowDuration = getConfig("baseSlowDuration", 1.5, Double.class);
         slowDurationIncreasePerLevel = getConfig("slowDurationIncreasePerLevel", 0.0, Double.class);
         slowStrength = getConfig("slowStrength", 3, Integer.class);

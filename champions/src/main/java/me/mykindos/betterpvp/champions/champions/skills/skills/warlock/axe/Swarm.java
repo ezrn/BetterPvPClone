@@ -62,6 +62,7 @@ public class Swarm extends ChannelSkill implements CooldownSkill, InteractSkill,
     private double pullSpeed;
     private double batSpeed;
     private double minBatSpeed;
+    private int numberOfBatsIncreasePerLevel;
     private Random random = new Random();
 
     @Inject
@@ -79,14 +80,16 @@ public class Swarm extends ChannelSkill implements CooldownSkill, InteractSkill,
         return new String[]{
                 "Right click with an Axe to activate",
                 "",
-                "Release a swarm of bats which",
-                "damage and knock back any enemies",
-                "they come in contact with",
+                "Release a swarm of " + getValueString(this::getNumBats, level) + "bats which will",
+                "fly for " + getValueString(this::getBatLifespan, level) + "seconds, damaging, <effect>Shocking</effect>",
+                "and knocking back any enemies they hit",
                 "",
-                "Right click again to toggle leads",
-                "which will pull you along with the bats",
+                "Right click again to attach yourself to",
+                "the bats, pulling you along with them.",
                 "",
-                "Taking damage will remove your bats"
+                "Taking damage will remove your bats",
+                "",
+                "Cooldown: " + getValueString(this::getCooldown, level),
         };
     }
 
@@ -120,6 +123,10 @@ public class Swarm extends ChannelSkill implements CooldownSkill, InteractSkill,
             return false;
         }
         return true;
+    }
+
+    public int getNumBats(int level){
+        return numberOfBats + ((level - 1) * numberOfBatsIncreasePerLevel);
     }
 
     @Override
@@ -292,7 +299,7 @@ public class Swarm extends ChannelSkill implements CooldownSkill, InteractSkill,
     @EventHandler
     public void handleBatDamage(CustomDamageEvent event) {
         if (!(event.getDamagee() instanceof Bat bat)) return;
-
+        if (!(event.getDamager() instanceof Player)) return;
         for (ArrayList<BatData> bats : batData.values()) {
             for (BatData batData : bats) {
                 if (batData.getBat().equals(bat)) {
@@ -342,13 +349,14 @@ public class Swarm extends ChannelSkill implements CooldownSkill, InteractSkill,
 
     @Override
     public void loadSkillConfig() {
-        batLifespan = getConfig("batLifespan", 2.0, Double.class);
-        batLifespanIncreasePerLevel = getConfig("batLifespanIncreasePerLevel", 1.0, Double.class);
+        batLifespan = getConfig("batLifespan", 3.0, Double.class);
+        batLifespanIncreasePerLevel = getConfig("batLifespanIncreasePerLevel", 0.5, Double.class);
         batDamage = getConfig("batDamage", 3.0, Double.class);
-        numberOfBats = getConfig("numberOfBats", 30, Integer.class); // default number of bats to spawn in a wave
-        pullSpeed = getConfig("pullSpeed", 0.5, Double.class); // default pull speed
-        batSpeed = getConfig("batSpeed", 0.6, Double.class); // default bat speed
-        minBatSpeed = getConfig("minBatSpeed", 0.3, Double.class); // default bat speed
+        numberOfBats = getConfig("numberOfBats", 10, Integer.class);
+        pullSpeed = getConfig("pullSpeed", 0.5, Double.class);
+        batSpeed = getConfig("batSpeed", 0.6, Double.class);
+        minBatSpeed = getConfig("minBatSpeed", 0.3, Double.class);
+        numberOfBatsIncreasePerLevel = getConfig("numberOfBatsIncreasePerLevel", 5, Integer.class);
     }
 
     @Override
