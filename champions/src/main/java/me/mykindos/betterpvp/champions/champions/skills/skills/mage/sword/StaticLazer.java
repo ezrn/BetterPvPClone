@@ -93,7 +93,7 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
                 "Headshots will deal double damage",
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level),
-                "Energy: <val>" + getEnergyPerSecond(level)
+                "Energy: " + getValueString(this::getEnergy, level),
         };
     }
 
@@ -178,46 +178,55 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
                     return;
                 }
 
-                xDelta += blocksPerSecond / 20.0; // 20 ticks per second
+                xDelta += blocksPerSecond / 20.0;
                 Location point = start.clone().add(direction.clone().multiply(xDelta));
 
-                // Add random offset point
                 Location midPoint = previousPoint.clone().add(point).multiply(0.5);
                 midPoint.add(randomOffset(random), randomOffset(random), randomOffset(random));
 
-                // Draw particles between previous point, mid point, and point
                 drawParticleLine(previousPoint, midPoint);
                 drawParticleLine(midPoint, point);
 
                 previousPoint = point.clone();
 
-                final RayTraceResult result = player.getEyeLocation().getWorld().rayTraceEntities(
-                        player.getEyeLocation(),
+                // Ray trace for entities
+                final RayTraceResult entityResult = player.getWorld().rayTraceEntities(
+                        point,
                         direction,
                         xDelta,
                         hitboxSize,
                         entity -> entity instanceof LivingEntity && !entity.equals(player)
                 );
 
+                // Ray trace for blocks
+                final RayTraceResult blockResult = player.getWorld().rayTraceBlocks(
+                        point,
+                        direction,
+                        xDelta
+                );
+
                 // Check if the ray trace hit an entity
-                if (result != null && result.getHitEntity() instanceof LivingEntity) {
-                    LivingEntity hitEntity = (LivingEntity) result.getHitEntity();
-                    if (!hitEntitiesMap.computeIfAbsent(player, k -> new HashMap<>()).containsKey(hitEntity)) {
-                        Location hitPos = result.getHitPosition().toLocation(point.getWorld());
-                        // Set the x and z coordinates of the hitPos to the player's x and z coordinates
-                        hitPos.setX(hitEntity.getLocation().getX());
-                        hitPos.setZ(hitEntity.getLocation().getZ());
-                        impact(player, charge, hitPos, level, hitEntity);
-                        hitEntitiesMap.get(player).put(hitEntity, true);
+                if (entityResult != null) {
+                    if (entityResult.getHitEntity() instanceof LivingEntity) {
+                        LivingEntity hitEntity = (LivingEntity) entityResult.getHitEntity();
+                        if (!hitEntitiesMap.computeIfAbsent(player, k -> new HashMap<>()).containsKey(hitEntity)) {
+                            Location hitPos = entityResult.getHitPosition().toLocation(point.getWorld());
+                            // Set the x and z coordinates of the hitPos to the player's x and z coordinates
+                            hitPos.setX(hitEntity.getLocation().getX());
+                            hitPos.setZ(hitEntity.getLocation().getZ());
+                            impact(player, charge, hitPos, level, hitEntity);
+                            hitEntitiesMap.get(player).put(hitEntity, true);
+                        }
                     }
                 }
 
-                // Check for block collision
-                final Block block = point.getBlock();
-                if (block.getType().isSolid()) {
-                    hitEntitiesMap.remove(player);
-                    cancel();
-                    return;
+                // Check if the ray trace hit a block
+                if (blockResult != null) {
+                    if (blockResult.getHitBlock() != null) {
+                        hitEntitiesMap.remove(player);
+                        cancel();
+                        return;
+                    }
                 }
 
                 // Particle
@@ -227,11 +236,22 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
                         .receivers(60, true)
                         .spawn();
             }
-        }.runTaskTimer(champions, 0L, 1L); // Runs every tick
+        }.runTaskTimer(champions, 0L, 1L);
 
         UtilMessage.message(player, getClassType().getName(), "You fired <alt>%s %s</alt>.", getName(), level);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.4f, 1.5f);
+
+        championsManager.getCooldowns().removeCooldown(player, getName(), true);
+        championsManager.getCooldowns().use(player,
+                getName(),
+                getCooldown(level),
+                true,
+                true,
+                isCancellable(),
+                this::shouldDisplayActionBar);
+
     }
+
 
     private void impact(Player player, float charge, Location hitPosition, int level, LivingEntity hitEntity) {
         // Particles
@@ -323,9 +343,9 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
     public void loadSkillConfig() {
         baseCharge = getConfig("baseCharge", 80.0, Double.class);
         chargeIncreasePerLevel = getConfig("chargeIncreasePerLevel", 20.0, Double.class);
-        baseDamage = getConfig("baseDamage", 3.0, Double.class);
-        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 1.5, Double.class);
-        baseRange = getConfig("baseRange", 25.0, Double.class);
+        baseDamage = getConfig("baseDamage", 4.0, Double.class);
+        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 0.5, Double.class);
+        baseRange = getConfig("baseRange", 15.0, Double.class);
         rangeIncreasePerLevel = getConfig("rangeIncreasePerLevel", 0.0, Double.class);
         blocksPerSecond = getConfig("blocksPerSecond", 100.0, Double.class);
         headshotDistance = getConfig("headshotDistance", 0.3, Double.class);

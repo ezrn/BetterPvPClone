@@ -247,8 +247,8 @@ public class ArcticArmour extends ActiveToggleSkill implements EnergySkill, Defe
 
         resistanceStrength = getConfig("resistanceStrength", 1, Integer.class);
         slownessStrength = getConfig("slownessStrength", 1, Integer.class);
-        slowDuration = getConfig("slowDuration", 1.0, Double.class);
-        slowDurationIncreasePerLevel = getConfig("slowDurationIncreasePerLevel", 1.0, Double.class);
+        slowDuration = getConfig("slowDuration", 2.0, Double.class);
+        slowDurationIncreasePerLevel = getConfig("slowDurationIncreasePerLevel", 0.5, Double.class);
     }
 
 

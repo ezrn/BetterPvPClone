@@ -182,15 +182,15 @@ public class LightningOrb extends Skill implements InteractSkill, CooldownSkill,
         baseShockDuration = getConfig("baseShockDuration", 2.0, Double.class);
         shockDurationIncreasePerLevel = getConfig("shockDurationIncreasePerLevel", 0.0, Double.class);
 
-        baseDamage = getConfig("baseDamage", 11.0, Double.class);
-        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 0.0, Double.class);
+        baseDamage = getConfig("baseDamage", 7.0, Double.class);
+        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 1.0, Double.class);
 
         velocityStrength = getConfig("velocityStrength", 3.0, Double.class);
 
         baseSilenceDuration = getConfig("baseSilenceDuration", 3.0, Double.class);
         silenceDurationIncreasePerLevel = getConfig("silenceDurationIncreasePerLevel", 0.0, Double.class);
-        delay = getConfig("delay", 5.0, Double.class);
-        delayDecreasePerLevel = getConfig("delayDecreasePerLevel", 0.5, Double.class);
+        delay = getConfig("delay", 3.0, Double.class);
+        delayDecreasePerLevel = getConfig("delayDecreasePerLevel", 0.0, Double.class);
     }
 
     @Override

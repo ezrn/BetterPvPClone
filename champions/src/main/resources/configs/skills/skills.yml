@@ -307,9 +307,9 @@ skills:
       cooldown: 10.0
       baseCharge: 80.0
       chargeIncreasePerLevel: 20.0
-      baseDamage: 3.0
-      damageIncreasePerLevel: 1.5
-      baseRange: 25.0
+      baseDamage: 4.0
+      damageIncreasePerLevel: 0.5
+      baseRange: 15.0
       cooldownDecreasePerLevel: 0.5
       blocksPerSecond: 100.0
       headshotDistance: 0.3
@@ -317,6 +317,8 @@ skills:
       rangeIncreasePerLevel: 0.0
       hitboxSize: 0.5
       offsetMultiplier: 0.5
+      energy: 40
+      energyDecreasePerLevel: 5
     rupture:
       enabled: true
       cooldown: 12.0
@@ -324,7 +326,7 @@ skills:
       slowDuration: 1.5
       cooldownDecreasePerLevel: 1.0
       baseDamage: 6.0
-      damageIncreasePerLevel: 1.0
+      damageIncreasePerLevel: 0.5
       baseSlowDuration: 1.5
       slowDurationIncreasePerLevel: 0.0
       slowStrength: 3
@@ -346,17 +348,17 @@ skills:
     fireblast:
       enabled: true
       maxlevel: 5
-      cooldown: 23.0
+      cooldown: 12.0
       speed: 0.15
       damage: 6.0
       baseFireDuration: 1.0
       fireDurationIncreasePerLevel: 0.5
-      cooldownDecreasePerLevel: 2.0
+      cooldownDecreasePerLevel: 1.0
       baseDamage: 4.0
-      damageIncreasePerLevel: 1.0
+      damageIncreasePerLevel: 0.5
       radius: 5.0
       radiusIncreasePerLevel: 0.0
-      velocityMultiplier: 2.0
+      velocityMultiplier: 3.0
       yAdd: 0.8
       yMax: 0.8
       groundBoost: true
@@ -367,31 +369,31 @@ skills:
       cooldown: 20.0
       sphereSize: 4
       speed: 1.5
-      cooldownDecreasePerLevel: 2.0
+      cooldownDecreasePerLevel: 1.0
       baseDuration: 4.0
       durationIncreasePerLevel: 1.0
       variance: 0.5
     lightningorb:
       enabled: true
       maxlevel: 5
-      cooldown: 23.0
+      cooldown: 12.0
       maxTargets: 3
-      cooldownDecreasePerLevel: 2.0
-      radiusIncreasePerLevel: 1.0
+      cooldownDecreasePerLevel: 1.0
+      radiusIncreasePerLevel: 0.5
       slowDurationIncreasePerLevel: 0.0
       slowStrength: 2
       shockDurationIncreasePerLevel: 0.0
-      baseDamage: 8.0
-      damageIncreasePerLevel: 0.0
-      baseRadius: 3.0
+      baseDamage: 6.0
+      damageIncreasePerLevel: 1.0
+      baseRadius: 3.5
       slowDuration: 4.0
       baseShockDuration: 2.0
       shockDuration: 2.0
       velocityStrength: 3.0
       baseSilenceDuration: 3.0
       silenceDurationIncreasePerLevel: 0.0
-      delay: 5.0
-      delayDecreasePerLevel: 0.5
+      delay: 1.7
+      delayDecreasePerLevel: 0.0
     immolate:
       enabled: true
       maxlevel: 3
@@ -408,8 +410,8 @@ skills:
     magmablade:
       enabled: true
       maxlevel: 3
-      baseDamage: 1.5
-      damageIncreasePerLevel: 1.5
+      baseDamage: 1.0
+      damageIncreasePerLevel: 1.0
     moltenshield:
       enabled: true
       maxlevel: 1
@@ -457,7 +459,7 @@ skills:
     fissure:
       enabled: true
       maxLevel: 5
-      cooldown: 15.0
+      cooldown: 12.0
       baseDamage: 1.6
       damageIncreasePerLevel: 0.4
       fissureDistance: 14
@@ -466,7 +468,7 @@ skills:
       baseExtraDamagePerBlock: 0.8
       baseExtraDamagePerBlockIncreasePerLevel: 0.2
       effectDuration: 2.5
-      slownessLevel: 5
+      slownessLevel: 3
       effectDurationIncreasePerLevel: 0.5
       gateCheckEnabled: true
       doorCheckEnabled: true
@@ -476,7 +478,7 @@ skills:
       cooldownDecreasePerLevel: 1.0
     nullblade:
       enabled: true
-      maxlevel: 5
+      maxlevel: 3
       energySiphoned: 5
       energySiphonedIncreasePerLevel: 5.0
     holylight:
@@ -509,13 +511,13 @@ skills:
       energyDecreasePerLevel: 4.0
       energyStartCost: 10.0
       energyStartCostDecreasePerLevel: 0.0
-      slowDuration: 1.0
-      slowDurationIncreasePerLevel: 1.0
+      slowDuration: 2.0
+      slowDurationIncreasePerLevel: 0.5
     pestilence:
       enabled: true
-      maxlevel: 3
+      maxlevel: 5
       cooldown: 20.0
-      cooldownDecreasePerLevel: 3.0
+      cooldownDecreasePerLevel: 2.0
       enemyDamageReduction: 0.2
       radius: 5.0
       radiusIncreasePerLevel: 2.0
@@ -884,15 +886,16 @@ skills:
     swarm:
       enabled: true
       maxlevel: 5
-      batLifespan: 3.0
-      batLifespanIncreasePerLevel: 0.5
-      batDamage: 3.0
+      batLifespan: 1.5
+      batLifespanIncreasePerLevel: 1.0
+      batDamage: 1.0
       cooldown: 15.0
       cooldownDecreasePerLeve: 1.0
-      pullSpeed: 0.5
+      pullSpeed: 2.0
       batSpeed: 0.6
       numberOfBats: 10
       numberOfBatsIncreasePerLevel: 5
+      fallDamageLimit: 15.0
     bloodshed:
       enabled: true
       maxlevel: 5

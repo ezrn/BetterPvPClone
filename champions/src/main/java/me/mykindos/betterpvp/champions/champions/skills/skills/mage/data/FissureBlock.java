@@ -17,7 +17,7 @@ public class FissureBlock {
     private final Material materialToSet;
 
     public List<LivingEntity> getNearbyEntities() {
-        return UtilEntity.getNearbyEnemies(player, block.getLocation(), 2.5);
+        return UtilEntity.getNearbyEnemies(player, block.getLocation(), 1.5);
     }
 
     @Override

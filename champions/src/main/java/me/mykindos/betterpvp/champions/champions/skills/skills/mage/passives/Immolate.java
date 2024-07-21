@@ -42,7 +42,6 @@ public class Immolate extends ActiveToggleSkill implements EnergySkill, Throwabl
     private double fireTrailDurationIncreasePerLevel;
     private int speedStrength;
     private int strengthLevel;
-    private double immolateWeakness;
 
     @Inject
     public Immolate(Champions champions, ChampionsManager championsManager) {

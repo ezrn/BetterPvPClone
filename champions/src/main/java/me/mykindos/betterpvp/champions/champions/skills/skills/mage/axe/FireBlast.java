@@ -89,7 +89,7 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
                 "dealing " + getValueString(this::getDamage, level) + " damage, and igniting them for ",
                 getValueString(this::getFireDuration, level) + " seconds",
                 "",
-                "Cooldown: <val>" + getCooldown(level)
+                "Cooldown: " + getValueString(this::getCooldown, level),
         };
     }
 
@@ -235,10 +235,10 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
 
     @Override
     public void loadSkillConfig() {
-        fallDamageLimit = getConfig("fallDamageLimit", 6.0, Double.class);
+        fallDamageLimit = getConfig("fallDamageLimit", 8.0, Double.class);
         speed = getConfig("speed", 0.2, Double.class);
         baseDamage = getConfig("baseDamage", 4.0, Double.class);
-        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 1.0, Double.class);
+        damageIncreasePerLevel = getConfig("damageIncreasePerLevel", 0.5, Double.class);
         baseFireDuration = getConfig("baseFireDuration", 0.5, Double.class);
         fireDurationIncreasePerLevel = getConfig("fireDurationIncreasePerLevel", 1.0, Double.class);
         radius = getConfig("radius", 4.0, Double.class);

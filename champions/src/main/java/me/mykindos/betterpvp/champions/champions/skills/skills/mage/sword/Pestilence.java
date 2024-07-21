@@ -26,6 +26,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -105,6 +106,8 @@ public class Pestilence extends Skill implements CooldownSkill, Listener, Intera
     @Override
     public void activate(Player player, int level) {
         createPoisonCloud(player, level);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EVOKER_PREPARE_WOLOLO, 1.0f, 2.0f);
+
     }
 
     private void createPoisonCloud(Player caster, int level) {
@@ -142,7 +145,7 @@ public class Pestilence extends Skill implements CooldownSkill, Listener, Intera
         data.getInfectionTimers().put(target, System.currentTimeMillis() + (long) (getInfectionDuration(level) * 1000));
         championsManager.getEffects().addEffect(target, EffectTypes.POISON, 1, (long) (getInfectionDuration(level) * 1000));
         data.getOriginalCasters().put(target, originalCaster);
-        for (LivingEntity ent : UtilEntity.getNearbyEnemies(caster, target.getLocation(), getRadius(level))) {
+        for (LivingEntity ent : UtilEntity.getNearbyEnemies(originalCaster, target.getLocation(), getRadius(level))) {
             if(ent.equals(caster)) return;
             System.out.println(pestilenceDataMap.get(caster).getSentTrackingTrail());
             if (!pestilenceDataMap.get(originalCaster).getSentTrackingTrail().getOrDefault(ent, false)) {
