@@ -48,7 +48,7 @@ public class BleedEffect extends VanillaEffectType {
             double currentHealth = livingEntity.getHealth();
             double damageToDeal = bleedDamage;
 
-            if (currentHealth > bleedDamage) {
+            if (currentHealth > (bleedDamage + 0.5)) {
                 damageToDeal = bleedDamage;
             } else if (currentHealth > 1.0) {
                 damageToDeal = currentHealth - 1.0;
@@ -59,6 +59,9 @@ public class BleedEffect extends VanillaEffectType {
 
             CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, damageToDeal, false, "Bleed");
             cde.setIgnoreArmour(true);
+
+            if(livingEntity.isDead()) return;
+
             UtilDamage.doCustomDamage(cde);
 
             livingEntity.getWorld().playSound(livingEntity.getLocation().add(0, 1, 0), Sound.ENTITY_PLAYER_HURT_FREEZE, 1f, 2f);

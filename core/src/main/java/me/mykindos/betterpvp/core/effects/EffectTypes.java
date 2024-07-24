@@ -46,10 +46,10 @@ public class EffectTypes {
     @Getter
     private static List<EffectType> effectTypes = new ArrayList<>();
 
-    private static DamageLogManager damageLogManager;
+    private static EffectManager effectManager;
 
-    public EffectTypes(DamageLogManager damageLogManager) {
-        EffectTypes.damageLogManager = damageLogManager;
+    public EffectTypes(EffectManager effectManager) {
+        EffectTypes.effectManager = effectManager;
     }
 
 
@@ -63,7 +63,7 @@ public class EffectTypes {
     public static final EffectType BLINDNESS = createEffectType(new BlindnessEffect());
     public static final EffectType LEVITATION = createEffectType(new LevitationEffect());
     public static final EffectType BLEED = createEffectType(new BleedEffect());
-    public static final EffectType MARKED = createEffectType(new MarkedEffect(damageLogManager));
+    public static final EffectType MARKED = createEffectType(new MarkedEffect());
     public static final EffectType SLOWNESS = createEffectType(new SlownessEffect());
     public static final EffectType SHOCK = createEffectType(new ShockEffect());
     public static final EffectType WITHER = createEffectType(new WitherEffect());

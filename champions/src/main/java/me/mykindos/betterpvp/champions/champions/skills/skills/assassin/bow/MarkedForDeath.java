@@ -63,6 +63,8 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
                 "for " + getValueString(this::getDuration, level) + " seconds",
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level),
+                EffectTypes.MARKED.getDescription(getAmplifier(level))
+
         };
     }
 
@@ -86,13 +88,12 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
 
     @Override
     public void onHit(Player damager, LivingEntity target, int level) {
-        if (!(target instanceof Player damagee)) return;
 
         UtilMessage.simpleMessage(damager, getClassType().getName(), "You hit <yellow>%s</yellow> with <green>%s %s</green>.", target.getName(), getName(), level);
-        UtilMessage.simpleMessage(damagee, getClassType().getName(), "<alt2>%s</alt2> hit you with <alt>%s %s</alt>.", damager.getName(), getName(), level);
+        UtilMessage.simpleMessage(target, getClassType().getName(), "<alt2>%s</alt2> hit you with <alt>%s %s</alt>.", damager.getName(), getName(), level);
 
         long duration = (long) (getDuration(level) * 1000L);
-        championsManager.getEffects().addEffect(damagee, damager, EffectTypes.MARKED, getAmplifier(level), duration);
+        championsManager.getEffects().addEffect(target, damager, EffectTypes.MARKED, getAmplifier(level), duration);
     }
 
     @Override
