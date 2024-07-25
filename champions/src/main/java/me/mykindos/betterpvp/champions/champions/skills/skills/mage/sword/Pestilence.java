@@ -226,7 +226,7 @@ public class Pestilence extends Skill implements CooldownSkill, Listener, Intera
 
     private void spawnParticles(Location location, int count) {
         Particle.DustOptions poisonDust = new Particle.DustOptions(Color.fromRGB(0, 255, 0), 1);
-        new ParticleBuilder(Particle.REDSTONE)
+        new ParticleBuilder(Particle.DUST)
                 .location(location)
                 .count(count)
                 .offset(0.1, 0.1, 0.1)
@@ -246,7 +246,7 @@ public class Pestilence extends Skill implements CooldownSkill, Listener, Intera
         double green = 0.8;
         double blue = 0.4;
 
-        new ParticleBuilder(Particle.SPELL_MOB)
+        new ParticleBuilder(Particle.ENTITY_EFFECT)
                 .location(particleLocation)
                 .count(0)
                 .offset(red, green, blue)
@@ -276,7 +276,7 @@ public class Pestilence extends Skill implements CooldownSkill, Listener, Intera
 
                     Bukkit.getScheduler().scheduleSyncDelayedTask(champions, () -> {
                         if (data.getInfectionTimers().containsKey(infected)) {
-                            new ParticleBuilder(Particle.VILLAGER_HAPPY)
+                            new ParticleBuilder(Particle.HAPPY_VILLAGER)
                                     .location(infected.getLocation().add(x, 1, z))
                                     .receivers(30)
                                     .extra(0)

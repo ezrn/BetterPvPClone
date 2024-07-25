@@ -161,10 +161,7 @@ public class Flash extends Skill implements InteractSkill, Listener, MovementSki
     public void activate(Player player, int level) {
         final Location origin = player.getLocation();
         UtilLocation.teleportForward(player, teleportDistance, false, success -> {
-            player.getWorld().playSound(origin, Sound.ENTITY_WITHER_SHOOT, 0.4F, 1.2F);
-            player.getWorld().playSound(origin, Sound.ENTITY_SILVERFISH_DEATH, 1.0F, 1.6F);
-
-            if (!success) {
+            if (!Boolean.TRUE.equals(success)) {
                 return;
             }
 
@@ -188,8 +185,11 @@ public class Flash extends Skill implements InteractSkill, Listener, MovementSki
             final Location lineEnd = player.getLocation().clone().add(0.0, player.getHeight() / 2, 0.0);
             final VectorLine line = VectorLine.withStepSize(lineStart, lineEnd, 0.25f);
             for (Location point : line.toLocations()) {
-                Particle.FIREWORKS_SPARK.builder().location(point).count(2).receivers(100).extra(0).spawn();
+                Particle.FIREWORK.builder().location(point).count(2).receivers(100).extra(0).spawn();
             }
+
+            player.getWorld().playSound(origin, Sound.ENTITY_WITHER_SHOOT, 0.4F, 1.2F);
+            player.getWorld().playSound(origin, Sound.ENTITY_SILVERFISH_DEATH, 1.0F, 1.6F);
         });
     }
 

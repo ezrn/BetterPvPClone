@@ -160,11 +160,11 @@ public class FireBlast extends Skill implements InteractSkill, CooldownSkill, Li
     private void doExplosion(Player shooter, Location fireballLocation, int level) {
         final List<KeyValue<LivingEntity, EntityProperty>> nearby = UtilEntity.getNearbyEntities(shooter, fireballLocation, getRadius(level), EntityProperty.ALL);
 
-        new ParticleBuilder(Particle.EXPLOSION_LARGE)
-                .location(fireballLocation)
-                .count(1)
-                .receivers(60)
-                .spawn();
+            new ParticleBuilder(Particle.EXPLOSION)
+                    .location(fireballLocation)
+                    .count(1)
+                    .receivers(60)
+                    .spawn();
 
         double radius = getRadius(level);
         if (shooter.getLocation().distance(fireballLocation) <= radius && nearby.stream().noneMatch(entry -> entry.get().equals(shooter))) {

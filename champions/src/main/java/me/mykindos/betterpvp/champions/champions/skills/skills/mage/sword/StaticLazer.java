@@ -230,7 +230,7 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
                 }
 
                 // Particle
-                Particle.FIREWORKS_SPARK.builder()
+                Particle.FIREWORK.builder()
                         .extra(0)
                         .location(point)
                         .receivers(60, true)
@@ -282,7 +282,7 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
 
         Location current = start.clone();
         for (int i = 0; i < points; i++) {
-            Particle.FIREWORKS_SPARK.builder()
+            Particle.FIREWORK.builder()
                     .extra(0)
                     .location(current)
                     .receivers(60, true)
