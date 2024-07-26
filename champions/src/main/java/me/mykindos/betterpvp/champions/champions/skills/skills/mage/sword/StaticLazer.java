@@ -324,7 +324,7 @@ public class StaticLazer extends ChannelSkill implements InteractSkill, EnergyCh
                 double y = loc.getY() + (1 + (random.nextDouble() - 0.5) * 0.9);
                 double z = loc.getZ() + (random.nextDouble() - 0.5) * 0.5;
                 Location particleLoc = new Location(loc.getWorld(), x, y, z);
-                new ParticleBuilder(Particle.FIREWORKS_SPARK)
+                new ParticleBuilder(Particle.FIREWORK)
                         .location(particleLoc)
                         .count(1)
                         .offset(0.0, 0.0, 0.0)
