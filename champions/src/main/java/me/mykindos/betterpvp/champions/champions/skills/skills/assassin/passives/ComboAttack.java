@@ -126,6 +126,6 @@ public class ComboAttack extends Skill implements PassiveSkill, Listener, Damage
     public void loadSkillConfig() {
         baseDamageIncrement = getConfig("baseDamageIncrement", 1.0, Double.class);
         damageIncrement = getConfig("damageIncrement", 1.0, Double.class);
-        duration = getConfig("duration", 1.2, Double.class);
+        duration = getConfig("duration", 2.0, Double.class);
     }
 }

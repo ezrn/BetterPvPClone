@@ -42,8 +42,8 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
 
     private double baseDuration;
     private double durationIncreasePerLevel;
-    private int markedStrengthIncreasePerLevel;
-    private int markedStrength;
+    private int vulnerabilityStrengthIncreasePerLevel;
+    private int vulnerabilityStrength;
 
     @Inject
     public MarkedForDeath(Champions champions, ChampionsManager championsManager) {
@@ -60,17 +60,17 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
         return new String[]{
                 "Left click with a Bow to prepare",
                 "",
-                "Your next arrow will <effect>Mark</effect> players for death",
-                "for " + getValueString(this::getDuration, level) + " seconds",
+                "Your next arrow will give players",
+                "<effect>Vulnerability</effect> for " + getValueString(this::getDuration, level) + " seconds",
                 "",
                 "Cooldown: " + getValueString(this::getCooldown, level),
-                EffectTypes.MARKED.getDescription(getAmplifier(level))
+                EffectTypes.VULNERABILITY.getDescription(getAmplifier(level))
 
         };
     }
 
     public int getAmplifier(int level){
-        return markedStrength + ((level - 1) * markedStrengthIncreasePerLevel);
+        return vulnerabilityStrength + ((level - 1) * markedStrengthIncreasePerLevel);
     }
 
     public double getDuration(int level) {
@@ -94,7 +94,7 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
         UtilMessage.simpleMessage(target, getClassType().getName(), "<alt2>%s</alt2> hit you with <alt>%s %s</alt>.", damager.getName(), getName(), level);
 
         long duration = (long) (getDuration(level) * 1000L);
-        championsManager.getEffects().addEffect(target, damager, EffectTypes.MARKED, getAmplifier(level), duration);
+        championsManager.getEffects().addEffect(target, damager, EffectTypes.VULNERABILITY, getAmplifier(level), duration);
     }
 
     @Override
@@ -127,9 +127,9 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
 
     @Override
     public void loadSkillConfig() {
-        baseDuration = getConfig("baseDuration", 4.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
-        markedStrength = getConfig("markedStrength", 1, Integer.class);
-        markedStrengthIncreasePerLevel = getConfig("markedStrengthIncreasePerLevel", 1, Integer.class);
+        baseDuration = getConfig("baseDuration", 5.0, Double.class);
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 0.0, Double.class);
+        vulnerabilityStrength = getConfig("markedStrength", 2, Integer.class);
+        vulnerabilityStrengthIncreasePerLevel = getConfig("markedStrengthIncreasePerLevel", 1, Integer.class);
     }
 }

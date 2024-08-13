@@ -17,16 +17,16 @@ skills:
       enabled: true
       cooldown: 25.0
       maxlevel: 3
-      cooldownDecreasePerLevel: 7.5
-      baseDuration: 3.0
-      durationIncreasePerLevel: 0.0
+      cooldownDecreasePerLevel: 2.5
+      baseDuration: 1.0
+      durationIncreasePerLevel: 1.0
       hitDistance: 4.0
     shockingstrikes:
       enabled: true
       maxlevel: 3
       baseDuration: 1.0
       durationIncreasePerLevel: 1.0
-      slownessDuration: 0.5
+      slownessDuration: 1.0
       slownessStrength: 1
     viperstrikes:
       enabled: true
@@ -77,7 +77,7 @@ skills:
       enabled: true
       maxlevel: 3
       damageIncrement: 1.0
-      duration: 1.2
+      duration: 2.0
       baseDamageIncrement: 1.0
     concussion:
       enabled: true
@@ -130,11 +130,11 @@ skills:
       enabled: true
       maxlevel: 3
       cooldown: 25.0
-      baseDuration: 4.0
+      baseDuration: 5.0
       cooldownDecreasePerLevel: 5.0
-      durationIncreasePerLevel: 1.0
-      markedStrength: 1
-      markedStrengthIncreasePerLevel: 1
+      durationIncreasePerLevel: 0.0
+      vulnerabilityStrength: 2
+      vulnerabilityStrengthIncreasePerLevel: 1
     toxicarrow:
       enabled: true
       maxlevel: 3

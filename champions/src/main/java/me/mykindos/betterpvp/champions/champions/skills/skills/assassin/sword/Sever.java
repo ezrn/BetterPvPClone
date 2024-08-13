@@ -139,8 +139,8 @@ public class Sever extends Skill implements CooldownSkill, Listener, OffensiveSk
 
     @Override
     public void loadSkillConfig() {
-        baseDuration = getConfig("baseDuration", 3.0, Double.class);
-        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 0.0, Double.class);
+        baseDuration = getConfig("baseDuration", 1.0, Double.class);
+        durationIncreasePerLevel = getConfig("durationIncreasePerLevel", 1.0, Double.class);
         hitDistance = getConfig("hitDistance", 4.0, Double.class);
     }
 }

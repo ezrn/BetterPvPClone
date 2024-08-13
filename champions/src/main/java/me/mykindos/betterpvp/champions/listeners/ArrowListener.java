@@ -5,7 +5,6 @@ import com.google.inject.Singleton;
 import me.mykindos.betterpvp.champions.Champions;
 import me.mykindos.betterpvp.core.combat.events.DamageEvent;
 import me.mykindos.betterpvp.core.combat.events.PreDamageEvent;
-import me.mykindos.betterpvp.champions.champions.roles.RoleManager;
 import me.mykindos.betterpvp.core.config.Config;
 import me.mykindos.betterpvp.core.framework.events.items.ItemUpdateLoreEvent;
 import me.mykindos.betterpvp.core.listener.BPvPListener;
@@ -23,10 +22,9 @@ import org.bukkit.metadata.FixedMetadataValue;
 
 import java.util.HashMap;
 
-@BPvPListener
 @Singleton
+@BPvPListener
 public class ArrowListener implements Listener {
-    private final RoleManager roleManager;
 
     @Inject
     @Config(path = "combat.crit-arrows", defaultValue = "true")
@@ -41,9 +39,8 @@ public class ArrowListener implements Listener {
     private final Champions champions;
 
     @Inject
-    public ArrowListener(Champions champions, RoleManager roleManager) {
+    public ArrowListener(Champions champions) {
         this.champions = champions;
-        this.roleManager = roleManager;
     }
 
     @EventHandler

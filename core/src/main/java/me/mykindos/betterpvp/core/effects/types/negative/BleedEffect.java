@@ -45,22 +45,9 @@ public class BleedEffect extends VanillaEffectType {
         int marginOfError = 20;
 
         if (currentTime - lastBleedTime >= 1000 - marginOfError) {
-            double currentHealth = livingEntity.getHealth();
-            double damageToDeal = bleedDamage;
-
-            if (currentHealth > (bleedDamage + 0.5)) {
-                damageToDeal = bleedDamage;
-            } else if (currentHealth > 1.0) {
-                damageToDeal = currentHealth - 1.0;
-            } else {
-                lastBleedTimes.put(livingEntity.getUniqueId(), currentTime);
-                return;
-            }
 
             CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, damageToDeal, false, "Bleed");
             cde.setIgnoreArmour(true);
-
-            if(livingEntity.isDead()) return;
 
             UtilDamage.doCustomDamage(cde);
 

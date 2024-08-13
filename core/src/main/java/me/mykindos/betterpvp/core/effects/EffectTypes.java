@@ -2,14 +2,12 @@ package me.mykindos.betterpvp.core.effects;
 
 import lombok.CustomLog;
 import lombok.Getter;
-import me.mykindos.betterpvp.core.combat.damagelog.DamageLogManager;
 import me.mykindos.betterpvp.core.effects.types.negative.BleedEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.BlindnessEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.ConcussedEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.DarknessEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.FrozenEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.LevitationEffect;
-import me.mykindos.betterpvp.core.effects.types.negative.MarkedEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.NoJumpEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.NoSprintEffect;
 import me.mykindos.betterpvp.core.effects.types.negative.PoisonEffect;
@@ -46,13 +44,8 @@ public class EffectTypes {
     @Getter
     private static List<EffectType> effectTypes = new ArrayList<>();
 
-    private static EffectManager effectManager;
 
-    public EffectTypes(EffectManager effectManager) {
-        EffectTypes.effectManager = effectManager;
-    }
-
-
+    // <editor-fold defaultstate="collapsed" desc="Negative Effect Types">
     public static final EffectType SILENCE = createEffectType(new SilenceEffect());
     public static final EffectType VULNERABILITY = createEffectType(new VulnerabilityEffect());
     public static final EffectType STUN = createEffectType(new StunEffect());
@@ -63,13 +56,14 @@ public class EffectTypes {
     public static final EffectType BLINDNESS = createEffectType(new BlindnessEffect());
     public static final EffectType LEVITATION = createEffectType(new LevitationEffect());
     public static final EffectType BLEED = createEffectType(new BleedEffect());
-    public static final EffectType MARKED = createEffectType(new MarkedEffect());
     public static final EffectType SLOWNESS = createEffectType(new SlownessEffect());
     public static final EffectType SHOCK = createEffectType(new ShockEffect());
     public static final EffectType WITHER = createEffectType(new WitherEffect());
     public static final EffectType DARKNESS = createEffectType(new DarknessEffect());
     public static final EffectType FROZEN = createEffectType(new FrozenEffect());
+    // </editor-fold>
 
+    // <editor-fold defaultstate="collapsed" desc="Positive Effect Types">
 
     public static final EffectType SPEED = createEffectType(new SpeedEffect());
     public static final EffectType STRENGTH = createEffectType(new StrengthEffect());
