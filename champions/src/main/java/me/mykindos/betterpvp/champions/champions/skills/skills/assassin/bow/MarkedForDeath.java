@@ -70,7 +70,7 @@ public class MarkedForDeath extends PrepareArrowSkill implements DebuffSkill {
     }
 
     public int getAmplifier(int level){
-        return vulnerabilityStrength + ((level - 1) * markedStrengthIncreasePerLevel);
+        return vulnerabilityStrength + ((level - 1) * vulnerabilityStrengthIncreasePerLevel);
     }
 
     public double getDuration(int level) {

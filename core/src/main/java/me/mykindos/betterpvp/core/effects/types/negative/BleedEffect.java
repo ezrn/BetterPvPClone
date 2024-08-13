@@ -46,7 +46,7 @@ public class BleedEffect extends VanillaEffectType {
 
         if (currentTime - lastBleedTime >= 1000 - marginOfError) {
 
-            CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, damageToDeal, false, "Bleed");
+            CustomDamageEvent cde = new CustomDamageEvent(livingEntity, effect.getApplier(), null, EntityDamageEvent.DamageCause.CUSTOM, bleedDamage, false, "Bleed");
             cde.setIgnoreArmour(true);
 
             UtilDamage.doCustomDamage(cde);
