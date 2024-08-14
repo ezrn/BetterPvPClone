@@ -11,8 +11,6 @@ skills:
       wallKickStrength: 0.9
       wallKickInternalCooldown: 0.5
       fallDamageLimit: 15.0
-      damage: 5.0
-      damageIncreasePerLevel: 0.0
     sever:
       enabled: true
       cooldown: 25.0
@@ -55,9 +53,9 @@ skills:
       enabled: true
       maxlevel: 3
       cooldown: 15.0
-      baseDuration: 3.0
+      baseDuration: 2.0
       cooldownDecreasePerLevel: 2.5
-      durationIncreasePerLevel: 1.5
+      durationIncreasePerLevel: 1.0
     smokearrow:
       enabled: true
       maxlevel: 3
