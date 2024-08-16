@@ -32,7 +32,7 @@ skills:
       baseSeconds: 2.0
       baseDuration: 2.0
       durationIncreasePerLevel: 2.0
-      poisonStrength: 1
+      poisonStrength: 2
     backstab:
       enabled: true
       maxlevel: 3
