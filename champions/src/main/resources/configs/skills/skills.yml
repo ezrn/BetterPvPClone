@@ -11,6 +11,14 @@ skills:
       wallKickStrength: 0.9
       wallKickInternalCooldown: 0.5
       fallDamageLimit: 8.0
+    adrenaline:
+      enabled: true
+      maxLevel: 5
+      cooldown: 8.0
+      cooldownDecreasePerLevel: 1.0
+      baseDuration: 0.3
+      durationIncreasePerLevel: 0.1
+      speedStrength: 10
     sever:
       enabled: true
       cooldown: 20.0
