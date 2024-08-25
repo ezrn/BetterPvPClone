@@ -111,7 +111,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
                     this.cancel();
                     return;
                 }
-                player.getWorld().spawnParticle(Particle.EXPLOSION_NORMAL, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.1);
+                player.getWorld().spawnParticle(Particle.EXPLOSION, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.1);
                 player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 1, 0.5, 0.5, 0.5, 0.1);
                 ticks++;
             }
@@ -251,11 +251,14 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     }
 
     private void doWindBladeCollision(Player player, LivingEntity target) {
-        target.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, (int)(20 * levitationDuration), levitationStrength));
+        // Instead of applying levitation, apply an upward velocity
+        Vector upwardVelocity = new Vector(0, 1, 0).multiply(levitationStrength); // Adjust the upward strength as needed
+        target.setVelocity(upwardVelocity);  // Set the upward velocity
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
         UtilMessage.simpleMessage(player, "Wind Blade", "You hit an enemy with <green>" + ABILITY_NAME + "<gray>.");
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1, 2);
     }
+
 
     @EventHandler(priority = EventPriority.LOW)
     public void onDamage(PreCustomDamageEvent event) {
@@ -309,12 +312,10 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         windDamage = getConfig("windDamage", 5.0, Double.class);
         lineStartDistance = getConfig("lineStartDistance", 1.0, Double.class);
         particleDuration = getConfig("particleDuration", 10, Integer.class);
-        levitationDuration = getConfig("levitationDuration", 1.5, Double.class);
         windBurstCooldown = getConfig("windBurstCooldown", 2.5, Double.class);
         windBurstEnergyCost = getConfig("windBurstEnergyCost", 0, Integer.class);
-        dashEnergyCost = getConfig("dashEnergyCost", 60, Integer.class);
+        dashEnergyCost = getConfig("dashEnergyCost", 40, Integer.class);
         energyRegenerationPercent = getConfig("energyRegenerationPercent", 0.2 ,Double.class);
-        knockbackStrength = getConfig("knockbackStrength", 0.0, Double.class);
-        levitationStrength = getConfig("levitationStrength", 1, Integer.class);
+        knockbackStrength = getConfig("knockbackStrength", 0.5, Double.class);
     }
 }
