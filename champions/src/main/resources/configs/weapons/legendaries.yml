@@ -10,16 +10,14 @@ wind_blade:
   enabled: true
   baseDamage: 7.0
   velocityStrength: 1.2
-  windChargeradius: 2.0
+  windChargeRadius: 2.0
   windDamage: 5.0
-  knockbackStrength: 0.0
+  knockbackStrength: 0.5
   lineStartDistance: 1.0
   windBurstCooldown: 2.5
   windBurstEnergyCost: 0
-  dashEnergyCost: 60
+  dashEnergyCost: 40
   energyRegenerationPercent: 0.2
-  levitationDuration: 1.5
-  levitationStrength: 1
   particleDuration: 10
 hyper_axe:
   enabled: true

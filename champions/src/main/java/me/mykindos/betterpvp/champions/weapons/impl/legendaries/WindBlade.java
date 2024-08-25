@@ -8,6 +8,7 @@ import me.mykindos.betterpvp.champions.weapons.impl.legendaries.data.Line;
 import me.mykindos.betterpvp.core.client.repository.ClientManager;
 import me.mykindos.betterpvp.core.combat.events.CustomDamageEvent;
 import me.mykindos.betterpvp.core.combat.events.PreCustomDamageEvent;
+import me.mykindos.betterpvp.core.combat.weapon.Weapon;
 import me.mykindos.betterpvp.core.combat.weapon.types.ChannelWeapon;
 import me.mykindos.betterpvp.core.combat.weapon.types.InteractWeapon;
 import me.mykindos.betterpvp.core.combat.weapon.types.LegendaryWeapon;
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 @BPvPListener
-public class WindBlade extends ChannelWeapon implements InteractWeapon, LegendaryWeapon, Listener {
+public class WindBlade extends Weapon implements InteractWeapon, LegendaryWeapon, Listener {
 
     private static final String ABILITY_NAME = "Wind Dash";
     private static final String ABILITY_NAME_2 = "Wind Slash";
@@ -58,8 +59,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     public int dashEnergyCost;
     public double knockbackStrength;
     public double energyRegenerationPercent;
-    public double levitationDuration;
-    public int levitationStrength;
+    public double launchStrength;
     private final EnergyHandler energyHandler;
     private final ChampionsManager championsManager;
     private final ClientManager clientManager;
@@ -69,6 +69,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     private final Map<Player, List<List<Line>>> playerLines = new HashMap<>();
     private final Map<Player, List<Integer>> playerLineIndices = new HashMap<>();
     private final Map<Player, Set<LivingEntity>> hitTargets = new ConcurrentHashMap<>();
+
 
     @Inject
     public WindBlade(Champions champions, EnergyHandler energyHandler, ChampionsManager championsManager, CooldownManager cooldownManager, ClientManager clientManager) {
@@ -97,29 +98,31 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
 
     @Override
     public void activate(Player player) {
-        UtilMessage.simpleMessage(player, "Wind Blade", "You used <green>" + ABILITY_NAME + "<gray>.");
-        Vector vec = player.getLocation().getDirection().normalize().multiply(velocityStrength);
-        VelocityData velocityData = new VelocityData(vec, velocityStrength, false, 0.0D, 0.4D, 0.8D, true);
-        player.setVelocity(velocityData.getVector());
+        if(championsManager.getEnergy().use(player, getSimpleName(), dashEnergyCost, true)) {
+            UtilMessage.simpleMessage(player, "Wind Blade", "You used <green>" + ABILITY_NAME + "<gray>.");
+            Vector vec = player.getLocation().getDirection().normalize().multiply(velocityStrength);
+            VelocityData velocityData = new VelocityData(vec, velocityStrength, false, 0.0D, 0.4D, 0.8D, true);
+            player.setVelocity(velocityData.getVector());
 
-        new BukkitRunnable() {
-            int ticks = 0;
+            new BukkitRunnable() {
+                int ticks = 0;
 
-            @Override
-            public void run() {
-                if (ticks >= particleDuration) {
-                    this.cancel();
-                    return;
+                @Override
+                public void run() {
+                    if (ticks >= particleDuration) {
+                        this.cancel();
+                        return;
+                    }
+                    player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.1);
+                    player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 1, 0.5, 0.5, 0.5, 0.1);
+                    ticks++;
                 }
-                player.getWorld().spawnParticle(Particle.EXPLOSION, player.getLocation(), 10, 0.5, 0.5, 0.5, 0.1);
-                player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 1, 0.5, 0.5, 0.5, 0.1);
-                ticks++;
-            }
-        }.runTaskTimer(champions, 0, 1);
+            }.runTaskTimer(champions, 0, 1);
 
-        UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 0.5F, 2.0F);
+            UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 0.5F, 2.0F);
 
-        active.put(player, System.currentTimeMillis());
+            active.put(player, System.currentTimeMillis());
+        }
     }
 
     @EventHandler
@@ -252,7 +255,7 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
 
     private void doWindBladeCollision(Player player, LivingEntity target) {
         // Instead of applying levitation, apply an upward velocity
-        Vector upwardVelocity = new Vector(0, 1, 0).multiply(levitationStrength); // Adjust the upward strength as needed
+        Vector upwardVelocity = new Vector(0, 1, 0).multiply(launchStrength); // Adjust the upward strength as needed
         target.setVelocity(upwardVelocity);  // Set the upward velocity
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
         UtilMessage.simpleMessage(player, "Wind Blade", "You hit an enemy with <green>" + ABILITY_NAME + "<gray>.");
@@ -290,19 +293,10 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
     @Override
     public boolean canUse(Player player) {
         if (UtilBlock.isInLiquid(player)) {
-            if (!activeUsageNotifications.contains(player.getUniqueId())) {
-                UtilMessage.simpleMessage(player, getSimpleName(), String.format("You cannot use <green>%s <gray>while in water", ABILITY_NAME));
-                activeUsageNotifications.add(player.getUniqueId());
-            }
+            UtilMessage.simpleMessage(player, getSimpleName(), String.format("You cannot use <green>%s <gray>while in water", ABILITY_NAME));
             return false;
         }
-        activeUsageNotifications.remove(player.getUniqueId());
         return true;
-    }
-
-    @Override
-    public double getEnergy() {
-        return dashEnergyCost;
     }
 
     @Override
@@ -317,5 +311,6 @@ public class WindBlade extends ChannelWeapon implements InteractWeapon, Legendar
         dashEnergyCost = getConfig("dashEnergyCost", 40, Integer.class);
         energyRegenerationPercent = getConfig("energyRegenerationPercent", 0.2 ,Double.class);
         knockbackStrength = getConfig("knockbackStrength", 0.5, Double.class);
+        launchStrength = getConfig("launchStrength", 1.0, Double.class);
     }
 }
