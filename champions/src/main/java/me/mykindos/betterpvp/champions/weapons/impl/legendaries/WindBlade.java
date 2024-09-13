@@ -136,7 +136,6 @@ public class WindBlade extends Weapon implements InteractWeapon, LegendaryWeapon
                 }
                 drawLines(player);
                 UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.2F, 2.0F);
-                // Reset hit targets for this player
                 hitTargets.put(player, new HashSet<>());
             }
         }
@@ -210,8 +209,7 @@ public class WindBlade extends Weapon implements InteractWeapon, LegendaryWeapon
 
                             hitTargets.computeIfAbsent(player, k -> new HashSet<>()).add(target);
 
-                            // Regenerate energy when hitting a target
-                            energyHandler.regenerateEnergy(player, energyRegenerationPercent); // 0.1 here represents 10 energy in the EnergyHandler system
+                            energyHandler.regenerateEnergy(player, energyRegenerationPercent);
                         }
                     }
                 }
@@ -254,9 +252,8 @@ public class WindBlade extends Weapon implements InteractWeapon, LegendaryWeapon
     }
 
     private void doWindBladeCollision(Player player, LivingEntity target) {
-        // Instead of applying levitation, apply an upward velocity
-        Vector upwardVelocity = new Vector(0, 1, 0).multiply(launchStrength); // Adjust the upward strength as needed
-        target.setVelocity(upwardVelocity);  // Set the upward velocity
+        Vector upwardVelocity = new Vector(0, 1, 0).multiply(launchStrength);
+        target.setVelocity(upwardVelocity);
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_PUFFER_FISH_STING, 0.8F, 1.5F);
         UtilMessage.simpleMessage(player, "Wind Blade", "You hit an enemy with <green>" + ABILITY_NAME + "<gray>.");
         UtilSound.playSound(player.getWorld(), player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1, 2);
